@@ -3,9 +3,9 @@
 ## Algorithm
 
 - [LIS](<https://github.com/gwoprk98/TIL/blob/master/Algorithm/LIS%20(%EC%B5%9C%EC%9E%A5%20%EB%B6%80%EB%B6%84%20%EC%A6%9D%EA%B0%80%20%EC%88%98%EC%97%B4).md>)
-- [거품 정렬] (https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EA%B1%B0%ED%92%88%20%EC%A0%95%EB%A0%AC%20(Bubble%20Sort).md)
-- [계수 정렬] (https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EA%B3%84%EC%88%98%20%EC%A0%95%EB%A0%AC%20(Counting%20Sort).md)
-- [DFS, BFS] (https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EA%B9%8A%EC%9D%B4%20%EC%9A%B0%EC%84%A0%20%ED%83%90%EC%83%89%EA%B3%BC%20%EB%84%88%EB%B9%84%20%EC%9A%B0%EC%84%A0%20%ED%83%90%EC%83%89%20(DFS%20%26%20BFS).md)
+- [거품 정렬] (<https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EA%B1%B0%ED%92%88%20%EC%A0%95%EB%A0%AC%20(Bubble%20Sort).md>)
+- [계수 정렬] (<https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EA%B3%84%EC%88%98%20%EC%A0%95%EB%A0%AC%20(Counting%20Sort).md>)
+- [DFS, BFS] (<https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EA%B9%8A%EC%9D%B4%20%EC%9A%B0%EC%84%A0%20%ED%83%90%EC%83%89%EA%B3%BC%20%EB%84%88%EB%B9%84%20%EC%9A%B0%EC%84%A0%20%ED%83%90%EC%83%89%20(DFS%20%26%20BFS).md>)
 - [다익스트라 알고리즘] (https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EB%8B%A4%EC%9D%B5%EC%8A%A4%ED%8A%B8%EB%9D%BC%20%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98.md)
 - [문자열 매칭 알고리즘] (https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EB%AC%B8%EC%9E%90%EC%97%B4%20%EB%A7%A4%EC%B9%AD%20%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98.md)
 - [백트래킹] (https://github.com/gwoprk98/TIL/blob/master/Algorithm/%EB%B0%B1%ED%8A%B8%EB%9E%98%ED%82%B9.md)
