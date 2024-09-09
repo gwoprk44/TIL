@@ -37,12 +37,9 @@ public class P15656 {
         return;
        }
        for (int i = 0; i < n; i++) {
-        if(!visited[i]) {
-            visited[i] = true;
-            ans[depth] = arr[i];
-            dfs(start + 1, depth + 1);
-            visited[i] = false;
-        }
+        //중복 허용
+        ans[depth] = arr[i];
+        dfs(start + 1, depth + 1);
        }
     }
 }
