@@ -30,7 +30,6 @@ public class P2870 {
     }
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st;
         answer = new ArrayList<>();
         int N = Integer.parseInt(br.readLine());
         for(int i=0;i<N;i++) {
