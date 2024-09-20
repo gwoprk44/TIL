@@ -12,3 +12,5 @@
 ## JAVA
 
 - [Comparable과 Comparator의 이해](https://github.com/gwoprk98/TIL/blob/master/JAVA/Comparable%EA%B3%BC%20Comparator%EC%9D%98%20%EC%9D%B4%ED%95%B4.md)
+- [Collector](https://github.com/gwoprk98/TIL/blob/master/JAVA/Collector.md)
+- [Stream API의 이해](https://github.com/gwoprk98/TIL/blob/master/JAVA/Stream%20API%EC%9D%98%20%EC%9D%B4%ED%95%B4.md)
