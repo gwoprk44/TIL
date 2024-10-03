@@ -1,15 +1,6 @@
----
-aliases:
-  - DB
-tags:
-  - Resource
-  - Dev
-  - DB
----
-
 # 인덱스 스캔
 
-##  Index Range Scan
+## Index Range Scan
 
 - 인덱스 루트 블록에서 리프 블록까지 수직적으로 탐색한 후에 리프 블록을 필요한 범위(Range)만 스캔하는 방식
 - B\Tree 인덱스의 가장 일반적이고 정상적인 형태의 액세스 방식
@@ -38,19 +29,19 @@ Execution Plan ----------------------------------------------------------
 ### Index Full Scan의 효용성
 
 - 인덱스 선두 칼럼(ename)이 조건절에 없으면 옵티마이저는 우선적으로 Table Full Scan을 고려
-- 대용량 테이블이어서 Table Full Scan의 부담이 크다면 ?  
-    - 데이터 저장공간은 ‘가로×세로’ 즉, ‘칼럼길이×레코드수’에 의해 결정되므로  
+- 대용량 테이블이어서 Table Full Scan의 부담이 크다면 ?
+  - 데이터 저장공간은 ‘가로×세로’ 즉, ‘칼럼길이×레코드수’에 의해 결정되므로  
     대개 인덱스가 차지하는 면적은 테이블보다 훨씬 적게 마련
 
 #### 연봉이 5,000을 초과하는 사원이 전체 중 극히 일부라면?
 
 - 만약 인덱스 스캔 단계에서 대부분 레코드를 필터링하고 일부에 대해서만 테이블 액세스가 발생하는 경우  
-    => 옵티마이저는 Index Full Scan 방식을 선택한다.
+   => 옵티마이저는 Index Full Scan 방식을 선택한다.
 
 #### 인덱스를 이용한 소트 연산을 대체하는 경우
 
 - Index Full Scan은 Index Range Scan과 마찬가지로 그 결과집합이 인덱스 칼럼 순으로 정렬된다.  
-    => Sort Order By 연산을 생략할 목적으로 사용될 수도 있다.
+   => Sort Order By 연산을 생략할 목적으로 사용될 수도 있다.
 
 ```sql
 SQL> select /*+ first_rows */ * from emp  where sal > 1000  order by ename;
@@ -93,17 +84,19 @@ Execution Plan --------------------------------------------------
 1 0 TABLE ACCESS (BY INDEX ROWID) OF '사원' (TABLE)
 2 1   INDEX (SKIP SCAN) OF '사원_IDX' (INDEX)
 ```
+
 ### Index Skip Scan 내부 수행원리
 
 - 루트 또는 브랜치 블록에서 읽은 칼럼 값 정보를 이용해 조건에 부합하는 레코드를 포함할 “**가능성이 있는**”  
-    하위 블록(브랜치 또는 리프 블록)만 골라서 액세스하는 방식
+   하위 블록(브랜치 또는 리프 블록)만 골라서 액세스하는 방식
 - 조건절에 빠진 인덱스 선두 칼럼의 Distinct Value 개수가 적고 후행 칼럼의 Distinct Value 개수가 많을 때 유용하다.
+
 ### Index Skip Scan 대안 : In-List
 
 - Index Skip Scan에 의존하는 대신, 아래와 같이 성별 값을 In-List로 제공하는 방식
 - INLIST ITERATOR라고 표시된 부분 => 조건절 In-List에 제공된 값의 종류만큼 인덱스 탐색을 반복 수행
 - 직접 성별에 대한 조건식을 추가해 주면 Index Skip Scan에 의존하지 않고도 빠르게 결과집합을 얻을 수 있다.  
-    단, 효과를 발휘하려면 In-List로 제공하는 값의 종류가 적어야 한다.
+   단, 효과를 발휘하려면 In-List로 제공하는 값의 종류가 적어야 한다.
 
 ```sql
 SQL> select * from 사원  where 연봉 between 2000 and 4000  and 성별 in ('남', '여')
@@ -118,7 +111,7 @@ Execution Plan --------------------------------------------------
 
 - Index Full Scan보다 빠르다.
 - Index Fast Full Scan이 Index Full Scan보다 빠른 이유  
-    => 인덱스 트리 구조를 무시하고 인덱스 세그먼트 전체를 Multiblock Read 방식으로 스캔
+   => 인덱스 트리 구조를 무시하고 인덱스 세그먼트 전체를 Multiblock Read 방식으로 스캔
 
 ## Index Range Scan Descending
 

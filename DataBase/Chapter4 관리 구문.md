@@ -1,11 +1,4 @@
----
-aliases:
-  - DB
-tags:
-  - Resource
-  - Dev
-  - DB
----
+
 
 # DML문
 

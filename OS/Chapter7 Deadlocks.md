@@ -1,12 +1,3 @@
----
-aliases:
-  - OS
-tags:
-  - Resource
-  - CS
-  - OS
----
-
 # System Model
 
 프로세스는 다음과 같은 흐름으로 리소스를 이용한다.

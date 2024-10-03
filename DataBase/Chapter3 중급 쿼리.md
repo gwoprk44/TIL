@@ -1,14 +1,4 @@
----
-aliases:
-  - DB
-tags:
-  - Resource
-  - Dev
-  - DB
----
-
 # JOIN
-
 
 하나의 쿼리로 다수의 테이블을 조회할 수 있다. 조인은 열 값으로 테이블 행을 연결한다.
 
@@ -22,27 +12,24 @@ tags:
 
 > 조인 범위
 
-조인 범위는 이너와 아우터로 구분이 가능하다. 
+조인 범위는 이너와 아우터로 구분이 가능하다.
 
 - INNER JOIN: 두 테이블에서 일치하는 값을 가진 행을 반환합니다.  
-      
+
 - LEFT JOIN(또는 LEFT OUTER JOIN)  
-    왼쪽 테이블의 모든 행과 오른쪽 테이블의 일치하는 행을 반환합니다. 일치하는 항목이 없으면 오른쪽 테이블의 열에 대해 NULL 값이 반환됩니다.  
-      
+   왼쪽 테이블의 모든 행과 오른쪽 테이블의 일치하는 행을 반환합니다. 일치하는 항목이 없으면 오른쪽 테이블의 열에 대해 NULL 값이 반환됩니다.  
+
 - RIGHT JOIN(또는 RIGHT OUTER JOIN)  
-    오른쪽 테이블의 모든 행과 왼쪽 테이블의 일치하는 행을 반환합니다. 일치하는 항목이 없으면 왼쪽 테이블의 열에 대해 NULL 값이 반환됩니다.  
-      
+   오른쪽 테이블의 모든 행과 왼쪽 테이블의 일치하는 행을 반환합니다. 일치하는 항목이 없으면 왼쪽 테이블의 열에 대해 NULL 값이 반환됩니다.  
+
 - FULL OUTER JOIN  
-    왼쪽 또는 오른쪽 테이블에 일치하는 항목이 있으면 모든 행을 반환합니다. 일치하는 항목이 없으면 일치하지 않는 테이블의 열에 대해 NULL 값이 반환됩니다.
+   왼쪽 또는 오른쪽 테이블에 일치하는 항목이 있으면 모든 행을 반환합니다. 일치하는 항목이 없으면 일치하지 않는 테이블의 열에 대해 NULL 값이 반환됩니다.
 
 > 조인 차수
 
 조인되는 테이블의 차수를 의미한다. 이는 조인 조건, 조인 기준에 따라 변경될 수 있다.
 
-
 ![|1000](Pasted%20image%2020231228202731.png)
-
-  
 
 - 2개 이상의 테이블에서 데이터를 검색하기 위해서 사용
 - FROM 절에 두 개 이상의 테이블을 명시한다(View, Subquery도 가능)
@@ -64,10 +51,8 @@ SELECT * FROM TABLE1, TABLE2;
 ```
 SELECT a.칼럼명, b.칼럼명 ...
 FROM TABLE1 A JOIN TABLE1 B
-ON A.컬럼 = B.다른컬럼 
+ON A.컬럼 = B.다른컬럼
 ```
-
-  
 
 ### INNER JOIN 사용법
 
@@ -80,20 +65,16 @@ INNER JOIN TABLEB
 ON TABLEA.컬럼 = TABLEB.컬럼
 ```
 
-  
-
 ### FULL OUTER JOIN
 
 - 두 테이블에 합집합이라고 생각하면 된다
 - 공통된 값들은 공통된 값끼리 묶어져서 나오고, 공통되지 않은 값들도 모두 다 출력됨
 
 ```
-SELECT [TABLEA.]속성명,[TABLEB]속성명 
+SELECT [TABLEA.]속성명,[TABLEB]속성명
 FROM TABLEA FULL OUTER JOIN TABLEB
 ON TABLEA.컬럼 = TABLEB.컬럼
 ```
-
-  
 
 ### LEFT OUTER JOIN
 
@@ -106,8 +87,6 @@ LEFT OUTER JOIN TABLEB
 ON TABLEA.칼럼 = TABLEB.칼럼
 ```
 
-  
-
 ### RIGHT OUTER JOIN
 
 - 두 테이블 중에서 오른쪽 테이블에 조인시킬 컬럼의 값이 없는 경우에 사용하게 된다
@@ -119,20 +98,17 @@ RIGHT OUTER JOIN TABLEA
 ON TABLEB.칼럼 = TABLEA.칼럼
 ```
 
-
 # 서브 쿼리
 
 서브 쿼리란 다른 테이블의 값을 기준으로 한 테이블에서 데이터를 검색할 수 있도록 다른 쿼리 내부에 중첩된 쿼리를 의미한다. 즉, 다른 쿼리 내부에 포함된 `SELECT` 문을 의미한다.
 
 데이터 필터링, 정렬, 또는 그룹화와 같은 다양한 방법으로 사용된다.
 
-
 ## SELECT 절 서브쿼리 ( 스칼라 서브쿼리 )
 
 **스칼라 서브쿼리 ( Scalar Subqueries )​** 라고 불리며 **SELECT 절 안에 서브쿼리가 들어있다.**
 
 이 때, 서브쿼리의 결과는 반드시 **단일 행**이나 SUM, COUNT 등의 집계 함수를 거친 **단일 값으로 리턴**되어야 한다.
-
 
 이유는 서브쿼리를 끝마친 값하나를 메인쿼리에서 SELECT 하기 때문.
 
@@ -194,7 +170,7 @@ SELECT *
 
 - 비교연산자는 **단일행 비교연산자를 사용 ( >, >=, <, <=, =, ... ).**
 
-``` SQL
+```SQL
 // ex ) 사원들의 평균 급여보다 더 많은 급여를 받는 사원을 검색
 SELECT  ENAME, SAL
   FROM  EMP
@@ -222,7 +198,7 @@ SELECT  ENAME, SAL
 
 - **메인쿼리 > ALL ( 서브쿼리 )** : 서브쿼리의 결과와 비교하여 최대값 반환.
 
-``` SQL
+```SQL
 // ex ) 30번 소속 사원들 중 급여를 가장 많이 받는 사원보다 더 많은 급여를 받는 사람의 이름과 급여를 출력
 SELECT  ENAME, SAL
   FROM  EMP
@@ -239,7 +215,6 @@ SELECT  ENAME, SAL
 
 - **메인쿼리 > ANY ( 서브쿼리 )** : 서브쿼리의 결과와 비교해 메인쿼리의 데이터중 한개라도 서브쿼리 결과보다 크다면 최대값 반환.
 
-
 ### EXISTS
 
 메인쿼리의 비교조건이 서브쿼리의 검색결과중에 **하나라도 만족하는 값이 존재**하면 참.
@@ -250,25 +225,23 @@ IN은 실제 존재하는 데이터들의 모든 값까지 확인.
 
 NOT EXISTS는 메인쿼리의 컬럼명과 서브쿼리의 컬럼명을 비교하여 일치하지 않으면 메인쿼리 테이블의 모든 ROW(행)을 반환.
 
-
 # 집합 연산자
 
 > 테이블을 구성하는 행집합에 대해 테이블의 부분집합을 결과로 반환하는 연산자를 의미한다.
 
-|   |   |
-|---|---|
-|**집합 연산자**|**의미**|
-|**UNION**|두 집합에 대해 중복되는 행을 제외한 합집합|
-|**UNION ALL**|두 집합에 대해 중복되는 행을 포함한 합집합|
-|**MINUS**|두 집합 간의 차집합|
-|**INTERSECT**|두 집합 간의 교집합|
+|                 |                                            |
+| --------------- | ------------------------------------------ |
+| **집합 연산자** | **의미**                                   |
+| **UNION**       | 두 집합에 대해 중복되는 행을 제외한 합집합 |
+| **UNION ALL**   | 두 집합에 대해 중복되는 행을 포함한 합집합 |
+| **MINUS**       | 두 집합 간의 차집합                        |
+| **INTERSECT**   | 두 집합 간의 교집합                        |
 
 집합 연산자 사용법은 다음과 같다.
 
 ```sql
 SELECT 명령문1 [UNION | UNION ALL | INTERSECT | MINUS] SELECT 명령문2;
 ```
-
 
 ## UNION 연산자 (합집합)
 
@@ -288,9 +261,7 @@ UNION 연산자는 중복 값이 제거된 합집합을 새성한다. 이 때, �
 
 중복 값이 제거된 차집합을 생성한다. 역시, SORT가 발생한다.
 
-
 ![](Pasted%20image%2020231230133650.png)
-
 
 # Top-N 쿼리
 
@@ -316,17 +287,17 @@ ORDER BY SAL DESC;
 
 **ORDER BY 가 없다면 ORACLE 의 ROWNUM 조건과 SQL SERVER 의 TOP 절은 같은 결과를 보인다.**
 
-ORDER BY 절이 사용되는 경우 ORACLE 은 ROWNUM 조건을 ORDER BY 절보다 먼저 처리되는 WHERE 절에서 
+ORDER BY 절이 사용되는 경우 ORACLE 은 ROWNUM 조건을 ORDER BY 절보다 먼저 처리되는 WHERE 절에서
 
 처리하므로, **정렬 후 원하는 데이터를 얻기 위해 인라인 뷰에서 먼저 데이터를 정렬한 후 메인 쿼리에서 ROWNUM 을 사용해야한다.**
 
 ```SQL
 SELECT ENAME, SAL
 	FROM ( SELECT ENAME, SAL
-    	FROM EMP 
+    	FROM EMP
         ORDER BY SAL DESC
         )
-WHERE ROWNUM <=3;        
+WHERE ROWNUM <=3;
 ```
 
 ## TOP 절
@@ -336,7 +307,7 @@ WHERE ROWNUM <=3;
 **TOP (N) WITH TIES 로 동일 수치의 데이터는 추가로 더 추출**할 수 있다.
 
 ```SQL
-SELECT TOP(2) WITH TIES 
+SELECT TOP(2) WITH TIES
 	ENAME,SAL
     FROM EMP
 ORDER BY SAL DESC;
@@ -344,7 +315,7 @@ ORDER BY SAL DESC;
 
 ## ROW LIMITING 절
 
-ORDER BY 절 다음에 기술하며, _ORDER BY 와 함께 수행된다._ 
+ORDER BY 절 다음에 기술하며, *ORDER BY 와 함께 수행된다.*
 
 ROW와 ROWS 의 구분은 없다.
 
@@ -374,20 +345,16 @@ ORDER BY SAL,
 EMPNO OFFSET 5 ROWS;
 ```
 
-
 # 계층 쿼리
 
 계층 쿼리를 사용하면 순환 관계(Recursive) 관계를 가진 데이터를 조회 가능하다.
 
-
-|   |   |
-|---|---|
-|**LEVEL**|현재 테이블에는 존재하지 않는 컬럼  <br>오라클의 모든 SQL에서 사용할수 있는 것으로 해당 데이터가 몇 번째 단계이냐를 의미함 |
-|**START WITH**|어디부터 시작할 것인지를 정함 ( 최상위 레코드 ) |
-|**CONNECT BY PRIOR**|계층 구조에서 각 행의 연결 관계를 설정  <br>EMP 테이블에서 EMPNO, MGR 같은 |
-|**PRIOR**|어디부터 시작할 것인지를 정해 준다. |
-
-
+|                      |                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **LEVEL**            | 현재 테이블에는 존재하지 않는 컬럼 <br>오라클의 모든 SQL에서 사용할수 있는 것으로 해당 데이터가 몇 번째 단계이냐를 의미함 |
+| **START WITH**       | 어디부터 시작할 것인지를 정함 ( 최상위 레코드 )                                                                           |
+| **CONNECT BY PRIOR** | 계층 구조에서 각 행의 연결 관계를 설정 <br>EMP 테이블에서 EMPNO, MGR 같은                                                 |
+| **PRIOR**            | 어디부터 시작할 것인지를 정해 준다.                                                                                       |
 
 ## START WITH
 
@@ -403,11 +370,11 @@ STAART WITH 구문에서는 어떤 레코드를 최상위 레코드로 결정할
 
 PRIOR 연산자와 함께 사용하여 계층구조로 표현 가능하다.
 
->CONNECT BY PRIOR 자식컬럼 = 부모컬럼
+> CONNECT BY PRIOR 자식컬럼 = 부모컬럼
 
 부모에서 자식으로 트리를 구성(Top Down)
 
->CONNECT BY PRIOR 부모컬럼 = 자식컬럼
+> CONNECT BY PRIOR 부모컬럼 = 자식컬럼
 
 자식에서 부모로 트리를 구성(Bottom Up)
 
@@ -417,7 +384,7 @@ CONNECT_BY_ROOT  empno "Root empno", level
   FROM emp
  START WITH job='PRESIDENT'
 CONNECT BY PRIOR empno=mgr;
- 
+
 
 ENAME                    EMPNO  Root empno     LEVEL
 ------------------     ------- -----------   -------
@@ -437,14 +404,14 @@ KING                      7839    7839           1
 
 **계층구조 쿼리에서 로우의 최하위 레벨(Leaf) 여부를 반환. 최하위 레벨이면 1, 아니면 0**
 
-``` SQL
+```SQL
 SELECT LPAD(' ', 4*(LEVEL-1)) || ename ename, empno,
        CONNECT_BY_ISLEAF "leaf", level
   FROM emp
  START WITH job='PRESIDENT'
 CONNECT BY NOCYCLE PRIOR empno=mgr;
- 
- 
+
+
 ENAME                     EMPNO       leaf      LEVEL
 -------------------- ---------- ---------- ----------
 KING                       7839          0          1
@@ -464,19 +431,19 @@ KING                       7839          0          1
 
 **계층구조 쿼리에서 현재 로우 까지의 PATH 정보를 가져올수 있다.**
 
-``` SQL
+```SQL
 -- 사이즈조절
-COL PATH FORMAT A40 
- 
- 
+COL PATH FORMAT A40
+
+
 -- SYS_CONNECT_BY_PATH 예제
 SELECT LPAD(' ', 4*(LEVEL-1)) || ename ename, empno,
        SYS_CONNECT_BY_PATH(ename, '/') "PATH"
   FROM emp
  START WITH job='PRESIDENT'
 CONNECT BY PRIOR empno=mgr;
- 
- 
+
+
 ENAME                     EMPNO PATH
 -------------------- ---------- ---------------------------
 KING                       7839 /KING
@@ -494,14 +461,14 @@ KING                       7839 /KING
 
 **Leaf Node(최하위, 맨 마지막 끝) 의 전체 PATH 정보를 출력**
 
-``` SQL
+```SQL
 SELECT LEVEL, SUBSTR(SYS_CONNECT_BY_PATH(ename, ','), 2) path
   FROM emp
  WHERE CONNECT_BY_ISLEAF = 1
  START WITH mgr IS NULL
 CONNECT BY PRIOR empno = mgr;
- 
- 
+
+
     LEVEL PATH
 --------- -------------------------
         4 KING,JONES,SCOTT,ADAMS
@@ -516,21 +483,21 @@ CONNECT BY PRIOR empno = mgr;
 
 **계층구조 쿼리에서 상관관계를 유지하면서 정렬을 할 수 있게 해준다.**
 
-``` SQL
-COL ename FORMAT A25 
+```SQL
+COL ename FORMAT A25
 COL ename2 FORMAT A10
- 
- 
+
+
 -- ORDER SIBLINGS BY 예
 -- 정렬이 정상적으로 수행된 것을 확인
-SELECT LPAD(' ', 4*(LEVEL-1)) || ename ename, 
+SELECT LPAD(' ', 4*(LEVEL-1)) || ename ename,
        ename ename2, empno, level
   FROM emp
  START WITH job='PRESIDENT'
 CONNECT BY NOCYCLE PRIOR empno=mgr
  ORDER SIBLINGS BY ename2;
- 
- 
+
+
 ENAME                ENAME2          EMPNO      LEVEL
 -------------------- ---------- ---------- ----------
 KING                 KING             7839          1
@@ -544,20 +511,20 @@ KING                 KING             7839          1
         FORD         FORD             7902          3
         SCOTT        SCOTT            7788          3
             ADAMS    ADAMS            7876          4
- 
- 
- 
- 
+
+
+
+
 -- ORDER BY 예
 -- 정렬이 이상하게 수행된 것을 확인
-SELECT LPAD(' ', 4*(LEVEL-1)) || ename ename, 
+SELECT LPAD(' ', 4*(LEVEL-1)) || ename ename,
        ename ename2, empno, level
   FROM emp
  START WITH job='PRESIDENT'
 CONNECT BY NOCYCLE PRIOR empno=mgr
  ORDER BY ename2;
- 
- 
+
+
 ENAME                ENAME2          EMPNO      LEVEL
 -------------------- ---------- ---------- ----------
             ADAMS    ADAMS            7876          4

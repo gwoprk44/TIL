@@ -1,12 +1,3 @@
----
-aliases:
-  - 정렬
-tags:
-  - Resource
-  - CS
-  - Algorithm
----
-
 선택 정렬은 말 그대로 현재 위치에 들어갈 데이터를 찾아 선택하는 알고리즘이다.
 
 데이터를 '비교'하면서 찾기 때문에 **'비교 정렬'**이며 정렬의 대상이 되는 데이터 외에 추가적인 공간을 필요로 하지 않기 때문에 **'제자리 정렬(in-place sort)'**이기도 하다. 정확히는 데이터를 서로 교환하는 과정(swap)에서 임시 변수를 필요로 하나, 이는 충분히 무시할 만큼 적은 양이기 때문에 제자리 정렬로 보는 것이다.
@@ -15,12 +6,7 @@ tags:
 
 ---
 
-  
-  
-  ## 정렬 방법
-
-  
-  
+## 정렬 방법
 
 선택 정렬의 전체적인 과정은 이렇다.
 
@@ -28,7 +14,7 @@ tags:
 
 **2. 최솟값을 맨 앞 자리의 값과 교환한다.**
 
-**3. 맨 앞 자리를 제외한 나머지 값들 중 최솟값을 찾아 위와 같은 방법으로 반복한다.** 
+**3. 맨 앞 자리를 제외한 나머지 값들 중 최솟값을 찾아 위와 같은 방법으로 반복한다.**
 
 즉, 그림으로 보면 다음과 같은 과정을 거친다.
 
@@ -50,34 +36,34 @@ https://ko.wikipedia.org/wiki/선택_정렬
 
 ```java
 public class Selection_Sort {
- 
+
 	public static void selection_sort(int[] a) {
 		selection_sort(a, a.length);
 	}
-	
+
 	private static void selection_sort(int[] a, int size) {
-		
+
 		for(int i = 0; i < size - 1; i++) {
-			int min_index = i;	
-			
-			// 최솟값을 갖고있는 인덱스 찾기 
+			int min_index = i;
+
+			// 최솟값을 갖고있는 인덱스 찾기
 			for(int j = i + 1; j < size; j++) {
 				if(a[j] < a[min_index]) {
 					min_index = j;
 				}
 			}
-			
-			// i번째 값과 찾은 최솟값을 서로 교환 
+
+			// i번째 값과 찾은 최솟값을 서로 교환
 			swap(a, min_index, i);
 		}
 	}
-	
+
 	private static void swap(int[] a, int i, int j) {
 		int temp = a[i];
 		a[i] = a[j];
 		a[j] = temp;
 	}
-	
+
 ```
 
 ## 장점 및 단점
@@ -96,7 +82,7 @@ public class Selection_Sort {
 
 먼저 첫 번째 단점이다. 기본적으로 선택정렬은 **O(N2)**의 시간복잡도(time complexity)를 보인다.
 
-공식을 유도해보자면 이렇다. 
+공식을 유도해보자면 이렇다.
 
 N이 정렬해야하는 리스트의 자료 수, i가 교환되는 인덱스라고 할 때 loop(반복문)을 생각해보자.
 
@@ -106,7 +92,7 @@ i=2 일 때, 데이터 비교 횟수는 N-2 번
 
 i=3 일 때, 데이터 비교 횟수는 N-3 번
 
-                   **⋮**
+**⋮**
 
 i=N-1 일 때, 데이터 비교 횟수는 1 번
 

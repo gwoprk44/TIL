@@ -1,12 +1,3 @@
----
-aliases:
-  - 정렬
-tags:
-  - Resource
-  - CS
-  - Algorithm
----
-
 삽입 정렬은 현재 비교하고자 하는 target(타겟)과 그 이전의 원소들과 비교하며 자리를 교환(swap)하는 정렬 방법이다.
 
 말로만 설명하기에는 어려울 수 있으나 그림으로 보면 이해하기 쉬우니 일단 삽입 정렬에 대한 특징만 짚고 넘어가보자.
@@ -17,14 +8,7 @@ tags:
 
 ---
 
-  
-  
-  
-
 ## 정렬 방법
-
-  
-  
 
 삽입 정렬의 경우 원리 자체는 간단하다. 앞에서부터 해당 원소가 위치 할 곳을 탐색하고 해당 위치에 삽입하는 것이다.
 
@@ -34,7 +18,7 @@ tags:
 
 **2. 타겟이 되는 숫자가 이전 위치에 있던 원소보다 작다면 위치를 서로 교환한다.**
 
-**3. 그 다음 타겟을 찾아 위와 같은 방법으로 반복한다.** 
+**3. 그 다음 타겟을 찾아 위와 같은 방법으로 반복한다.**
 
 즉, 그림으로 보면 다음과 같은 과정을 거친다.
 
@@ -55,36 +39,37 @@ https://en.wikipedia.org/wiki/Insertion_sort
 https://ko.wikipedia.org/wiki/삽입_정렬
 
 ## 구현
+
 ```java
 	public class Insertion_Sort {
- 
+
 	public static void insertion_sort(int[] a) {
 		insertion_sort(a, a.length);
 	}
-	
+
 	private static void insertion_sort(int[] a, int size) {
-		
-		
+
+
 		for(int i = 1; i < size; i++) {
 			// 타겟 넘버
 			int target = a[i];
-			
+
 			int j = i - 1;
-			
+
 			// 타겟이 이전 원소보다 크기 전 까지 반복
 			while(j >= 0 && target < a[j]) {
 				a[j + 1] = a[j];	// 이전 원소를 한 칸씩 뒤로 미룬다.
 				j--;
 			}
-			
+
 			/*
 			 * 위 반복문에서 탈출 하는 경우 앞의 원소가 타겟보다 작다는 의미이므로
 			 * 타겟 원소는 j번째 원소 뒤에 와야한다.
 			 * 그러므로 타겟은 j + 1 에 위치하게 된다.
 			 */
-			a[j + 1] = target;	
+			a[j + 1] = target;
 		}
-		
+
 	}
 }
 ```

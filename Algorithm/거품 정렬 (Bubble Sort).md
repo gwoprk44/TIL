@@ -1,12 +1,3 @@
----
-aliases:
-  - 정렬
-tags:
-  - Resource
-  - CS
-  - Algorithm
----
-  
 거품 정렬은 아마 정렬 방식 중 가장 쉽게 생각할 수 있는 알고리즘 중 하나일 것이다.
 
 두 개의 인접한 원소를 비교하여 정렬하는 방식이다.
@@ -21,14 +12,7 @@ tags:
 
 ---
 
-  
-  
-  
-
 ## 정렬 방법
-
-  
-  
 
 거품 정렬의 전체적인 과정은 이렇다. (오름차순을 기준으로 설명)
 
@@ -64,22 +48,22 @@ https://ko.wikipedia.org/wiki/거품_정렬
 
 ```java
 public class Bubble_Sort {
- 
+
 	public static void bubble_sort(int[] a) {
 		bubble_sort(a, a.length);
 	}
-	
+
 	private static void bubble_sort(int[] a, int size) {
-		
-		// round는 배열 크기 - 1 만큼 진행됨 
+
+		// round는 배열 크기 - 1 만큼 진행됨
 		for(int i = 1; i < size; i++) {
-			
+
 			// 각 라운드별 비교횟수는 배열 크기의 현재 라운드를 뺀 만큼 비교함
 			for(int j = 0; j < size - i; j++) {
-				
+
 				/*
 				 *  현재 원소가 다음 원소보다 클 경우
-				 *  서로 원소의 위치를 교환한다. 
+				 *  서로 원소의 위치를 교환한다.
 				 */
 				if(a[j] > a [j + 1]) {
 					swap(a, j, j + 1);
@@ -87,7 +71,7 @@ public class Bubble_Sort {
 			}
 		}
 	}
-	
+
 	private static void swap(int[] a, int i, int j) {
 		int temp = a[i];
 		a[i] = a[j];

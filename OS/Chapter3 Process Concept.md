@@ -1,12 +1,3 @@
----
-aliases:
-  - OS
-tags:
-  - Resource
-  - CS
-  - OS
----
-
 # 프로세스 관리
 
 디스크에 존재하는 것은 프로그램, 메모리에 로드된것은 프로세스. 프로세스는 Stack, Heap, Data, Code로 나뉘어진다.
