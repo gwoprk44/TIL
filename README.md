@@ -29,3 +29,7 @@
 
 - [RealMySql](https://github.com/gwoprk98/TIL/blob/master/RDBMS/RealMySql.md)
 - [정규화](https://github.com/gwoprk98/TIL/blob/master/RDBMS/%EC%A0%95%EA%B7%9C%ED%99%94.md)
+
+## OS
+
+- [운영체제 기초](https://github.com/gwoprk98/TIL/blob/master/OS/%EC%9A%B4%EC%98%81%EC%B2%B4%EC%A0%9C%20%EA%B8%B0%EC%B4%88.md)
