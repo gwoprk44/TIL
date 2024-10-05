@@ -26,3 +26,6 @@
 - [TreeMap](https://github.com/gwoprk98/TIL/blob/master/JAVA/Treemap.md)
 
 ## RDBMS
+
+- [RealMySql](https://github.com/gwoprk98/TIL/blob/master/RDBMS/RealMySql.md)
+- [정규화](https://github.com/gwoprk98/TIL/blob/master/RDBMS/%EC%A0%95%EA%B7%9C%ED%99%94.md)
