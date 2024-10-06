@@ -8,6 +8,8 @@
   - [jpa 학습정리](https://github.com/gwoprk98/TIL/blob/master/Spring/JPA/jpa.md)
 - Spring
   - [토비의 스프링 3.1 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/%ED%86%A0%EB%B9%84%EC%9D%98%20%EC%8A%A4%ED%94%84%EB%A7%81%203.1/%ED%86%A0%EB%B9%84%EC%9D%98%20%EC%8A%A4%ED%94%84%EB%A7%813.1.md)
+  - Ioc
+    - [의존성주입 DI 기초]
 
 ## JAVA
 
