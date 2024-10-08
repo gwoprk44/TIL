@@ -22,6 +22,8 @@
     - [mvc 요청 flow](https://github.com/gwoprk98/TIL/blob/master/Spring/mvc/mvc-flow.md)
     - [스프링 웹 mvc 강의 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/mvc/Spring-%EC%9B%B9MVC-%EA%B0%95%EC%9D%98-%EC%A0%95%EB%A6%AC.md)
     - [TaskExecutor 비동기 처리](https://github.com/gwoprk98/TIL/blob/master/Spring/mvc/TaskExecutor-%EB%B9%84%EB%8F%99%EA%B8%B0-%EC%B2%98%EB%A6%AC.md)
+  - Batch
+    - [batch - 기본](https://github.com/gwoprk98/TIL/tree/master/Spring/spring-batch)
 
 ## JAVA
 
