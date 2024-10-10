@@ -14,7 +14,7 @@
   - Basic
     - [class-loder](https://github.com/gwoprk98/TIL/blob/master/Spring/basic/class-loader.md)
   - Aop
-    - [aop - 기본](https://github.com/gwoprk98/TIL/blob/master/Spring/aop/AOP-basic.md)
+    - [aop 기초](https://github.com/gwoprk98/TIL/blob/master/Spring/aop/AOP-basic.md)
     - [aop - 프록시](https://github.com/gwoprk98/TIL/blob/master/Spring/aop/AOP-proxiy.md)
   - Servlet
     - [basic](https://github.com/gwoprk98/TIL/blob/master/Spring/servlet/basic.md)
@@ -24,7 +24,9 @@
     - [스프링 웹 mvc 강의 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/mvc/Spring-%EC%9B%B9MVC-%EA%B0%95%EC%9D%98-%EC%A0%95%EB%A6%AC.md)
     - [TaskExecutor 비동기 처리](https://github.com/gwoprk98/TIL/blob/master/Spring/mvc/TaskExecutor-%EB%B9%84%EB%8F%99%EA%B8%B0-%EC%B2%98%EB%A6%AC.md)
   - Batch
-    - [batch - 기본](https://github.com/gwoprk98/TIL/tree/master/Spring/spring-batch)
+    - [batch 기초](https://github.com/gwoprk98/TIL/tree/master/Spring/spring-batch)
+  - Security
+    - [Security 기초](https://github.com/gwoprk98/TIL/blob/master/Spring/security/basic.md)
 
 ## JAVA
 
