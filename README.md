@@ -6,6 +6,7 @@
   - [자바 ORM표준 JPA프로그래밍](https://github.com/gwoprk98/TIL/blob/master/Spring/JPA/%EC%9E%90%EB%B0%94ORM%ED%91%9C%EC%A4%80JPA%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D.md)
   - [페이징 API](https://github.com/gwoprk98/TIL/blob/master/Spring/JPA/JPA-Paging-API.md)
   - [jpa 학습정리](https://github.com/gwoprk98/TIL/blob/master/Spring/JPA/jpa.md)
+  - [영속성 컨텍스트 플러시](https://github.com/gwoprk98/TIL/blob/master/Spring/JPA/%EC%98%81%EC%86%8D%EC%84%B1%20%EC%BB%A8%ED%85%8D%EC%8A%A4%ED%8A%B8%20%ED%94%8C%EB%9F%AC%EC%8B%9C.md)
 - Spring
   - [토비의 스프링 3.1 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/%ED%86%A0%EB%B9%84%EC%9D%98%20%EC%8A%A4%ED%94%84%EB%A7%81%203.1/%ED%86%A0%EB%B9%84%EC%9D%98%20%EC%8A%A4%ED%94%84%EB%A7%813.1.md)
   - Ioc
