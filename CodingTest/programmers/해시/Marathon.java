@@ -1,4 +1,3 @@
-package programmers.해시;
 
 import java.util.*;
 
