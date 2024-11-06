@@ -1,4 +1,3 @@
-package BOJ.그래프;
 
 import java.io.*;
 import java.util.*;

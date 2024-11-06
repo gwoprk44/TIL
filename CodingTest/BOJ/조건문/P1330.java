@@ -1,4 +1,3 @@
-package BOJ.조건문;
 
 import java.io.*;
 import java.util.StringTokenizer;

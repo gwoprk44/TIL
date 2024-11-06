@@ -1,4 +1,3 @@
-package BOJ.배열;
 
 import java.io.*;
 

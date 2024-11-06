@@ -1,4 +1,3 @@
-package BOJ.완전탐색;
 
 import java.io.*;
 import java.util.StringTokenizer;

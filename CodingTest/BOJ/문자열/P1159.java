@@ -1,4 +1,3 @@
-package BOJ.문자열;
 import java.io.*;
 
 public class P1159 {
