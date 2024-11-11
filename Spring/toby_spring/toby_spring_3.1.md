@@ -9,7 +9,7 @@
     - [DAO의 확장](#DAO의확장)
         - [계방 폐쇄의 원칙](##계방폐쇄의원칙)
         - [전략 패턴](##전략패턴)
-        - [IoC](IoC란=InversionofControl=제어의역전)
+        - [IoC](##IoC란=InversionofControl=제어의역전)
 # 1장 오브젝트와 의존관계
 
 # 관심사의 분리
