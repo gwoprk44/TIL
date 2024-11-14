@@ -32,7 +32,7 @@
     - [Custom Security Expression](https://github.com/gwoprk98/TIL/blob/master/Spring/security/Custom%20Security%20Expression.md)
     - [security expression](https://github.com/gwoprk98/TIL/blob/master/Spring/security/security-expression.md)
   - Jdbc
-    - [JDBC가 등장한 이유]()
+    - [JDBC가 등장한 이유](https://github.com/gwoprk98/TIL/blob/master/Spring/jdbc/JDBC%EA%B0%80%20%EB%93%B1%EC%9E%A5%ED%95%9C%20%EC%9D%B4%EC%9C%A0.md)
 
 ## JAVA
 

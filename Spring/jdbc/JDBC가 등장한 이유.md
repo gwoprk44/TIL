@@ -1,7 +1,7 @@
 # 목차
 - [JDBC 등장 배경](#jdbc-등장-배경)
 - [JDBC란](#jdbc란)
-
+- [JDBC와 최신기술](#jdbc와-최신-기술)
  
 
 # JDBC 등장 배경
