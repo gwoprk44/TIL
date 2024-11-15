@@ -1,4 +1,3 @@
-package CodingTest.BOJ.브루트포스;
 
 import java.io.*;
 
