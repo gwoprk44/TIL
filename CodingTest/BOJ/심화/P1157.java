@@ -1,5 +1,5 @@
 
-package CodingTest.BOJ.심화1;
+package CodingTest.BOJ.심화;
 
 import java.io.*;
 
