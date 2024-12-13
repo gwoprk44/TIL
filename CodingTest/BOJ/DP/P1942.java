@@ -13,7 +13,7 @@ public class P1942 {
         int n = Integer.parseInt(br.readLine());
 
         int[][] dp = new int[n+1][n+1];
-        int[][] arr = new int[n+1][n+1];
+        int[][] arr = new int[n+1][n+1]; 
 
         for (int i = 1; i <= n; i++) {
             StringTokenizer st = new StringTokenizer(br.readLine());
