@@ -68,6 +68,7 @@
 - [HTTP 아키텍쳐](https://github.com/gwoprk98/TIL/blob/master/Network/%EC%9B%B9%EC%9D%98%20%EA%B8%B0%EC%B4%88.md)
 - [식별, 인가, 보안](https://github.com/gwoprk98/TIL/blob/master/Network/%EC%8B%9D%EB%B3%84%2C%20%EC%9D%B8%EA%B0%80%2C%20%EB%B3%B4%EC%95%88.md)
 - [엔터티, 인코딩, 국제화](https://github.com/gwoprk98/TIL/blob/master/Network/%EC%97%94%ED%84%B0%ED%8B%B0%2C%20%EC%9D%B8%EC%BD%94%EB%94%A9%2C%20%EA%B5%AD%EC%A0%9C%ED%99%94.md)
+- [HTTP웹 기본지식](https://github.com/gwoprk98/TIL/blob/master/Network/HTTP%EC%9B%B9%20%EA%B8%B0%EB%B3%B8%EC%A7%80%EC%8B%9D.md)
 
 # OOP
 
