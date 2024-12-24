@@ -87,5 +87,3 @@
 
 ## 코딩테스트
 
-- [BOJ](https://github.com/gwoprk98/TIL/tree/master/CodingTest/BOJ)
-- [programmers](https://github.com/gwoprk98/TIL/tree/master/CodingTest/programmers)
