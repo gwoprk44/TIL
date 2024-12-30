@@ -12,7 +12,7 @@
 - [URI와 웹 브라우저 요청 흐름](#uri와-웹-브라우저-요청-흐름)
     - [URI](#uri)
     - [웹 브라우저 요청 흐름](#웹-브라우저-요청-흐름)
-- [HTTP]
+- [HTTP](#http)
     - [모든것이 HTTP](#모든것이-http)
     - [클라이언트 서버 구조](#클라이언트-서버-구조)
     - [Stateful, Stateless](#stateful-stateless)
