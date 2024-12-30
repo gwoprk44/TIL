@@ -418,7 +418,7 @@ Stateless
 - 지금은 HTTP 지속 연결 (Persistent Connections)로 문제 해결
 - HTTP/2, HTTP/3에서 더 많은 최적화
 
-![connection](C:\Users\gwoprk\Desktop\박건우\TIL\assets\connection.png)
+![connection](https://github.com/gwoprk98/TIL/blob/master/assets/connection.png)
 
 Stateless를 기억하자
 
@@ -430,7 +430,7 @@ Stateless를 기억하자
 
 ## HTTP 메시지
 
-![http메시지](C:\Users\gwoprk\Desktop\박건우\TIL\assets\http메시지.png)
+![http메시지](https://github.com/gwoprk98/TIL/blob/master/assets/http%EB%A9%94%EC%8B%9C%EC%A7%80.png)
 
 시작라인
 
