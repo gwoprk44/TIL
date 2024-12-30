@@ -17,9 +17,10 @@ public class boj_1884 {
 
             if (H < 0) {
                 H = 23;
-            } System.out.println(H + " " + M);
+            } 
+            System.out.println(H + " " + M);
         } else {
-            System.out.println(H + " " + (60-M));
+            System.out.println(H + " " + (M-45));
         }
     }
 }
