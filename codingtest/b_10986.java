@@ -3,7 +3,7 @@ package codingtest;
 import java.io.*;
 import java.util.*;
 
-public class boj_10986 {
+public class b_10986 {
     private void solution() throws Exception {
         
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -31,7 +31,7 @@ public class boj_10986 {
     }
 
     public static void main(String[] args) throws Exception{
-        new boj_10986().solution();
+        new b_10986().solution();
 
     }
 }

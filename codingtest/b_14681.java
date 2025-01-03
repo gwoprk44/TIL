@@ -2,7 +2,7 @@ package codingtest;
 
 import java.io.*;
 
-public class boj_14681 {
+public class b_14681 {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 

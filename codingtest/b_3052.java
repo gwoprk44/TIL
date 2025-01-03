@@ -3,7 +3,7 @@ package codingtest;
 import java.io.*;
 import java.util.*;
 
-public class boj_3052 {
+public class b_3052 {
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
