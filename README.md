@@ -35,6 +35,8 @@
     - [JDBC가 등장한 이유](https://github.com/gwoprk98/TIL/blob/master/Spring/jdbc/JDBC%EA%B0%80%20%EB%93%B1%EC%9E%A5%ED%95%9C%20%EC%9D%B4%EC%9C%A0.md)
   - Test
     - [Jnuit5 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/test/Junit5.md)
+  - Inflearn-Spring
+    - [mvc-1](https://github.com/gwoprk98/TIL/blob/master/Spring/inflearn-spring/mvc-1.md)
 ## JAVA
 
 - [Comparable과 Comparator의 이해](https://github.com/gwoprk98/TIL/blob/master/JAVA/Comparable%EA%B3%BC%20Comparator%EC%9D%98%20%EC%9D%B4%ED%95%B4.md)
