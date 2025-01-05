@@ -8,8 +8,10 @@
     - [서블릿](#서블릿)
     - [동시요청 - 멀티 쓰레드](#동시요청---멀티-쓰레드)
     - [html, http api, csr, ssr](#html-http-api-csr-ssr)
-
-
+- [서블릿 프로젝트](#서블릿-프로젝트)
+	- [프로젝트 생성](#프로젝트-생성)
+	- [hello servlet 생성](#hello-servlet-생성)
+	- [html 파일 생성](#html-파일-생성)
 
 
 
@@ -166,3 +168,222 @@
 	- 예) 구글 지도, gamil, 구글 캘린더
 	- 관련 기술: react,vue.js -> 프론트엔드
 	
+# 서블릿 프로젝트
+
+## 프로젝트 생성
+
+서블릿을 이용하기 위해서는 Spring이 필요없다.
+
+하지만 내장 톰캣 덕분에 설정하기 편하니까 Spring Initializr를 이용해 프로젝트를 생성한다.
+
+패키징 형태만 war로 선택하고 나머지 설정은 달라도 상관없다.
+
+## hello servlet 생성
+
+먼저, application 파일에 어노테이션을 하나 추가해준다.
+
+```
+@ServletComponentScan //servlet 자동 등록
+@SpringBootApplication
+public class ServletApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(ServletApplication.class, args);
+	}
+}
+```
+
+**@ServletComponentScan**은 스프링이 자동적으로 하위 패키지에서 **서블릿을 모두 찾아서 자동으로 등록**해준다.
+
+basic 패키지를 생성하고 HelloServlet.java을 만들어보자.
+
+```
+@WebServlet(name="helloservlet", urlPatterns="/hello")
+public class HelloServlet extends HttpServlet{
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        System.out.println("HelloServlet.service");
+    }
+}
+```
+
+/hello에 접근하면 실행되는 페이지다.
+
+위 코드를 입력한 뒤, localhost:8080/hello에 접속하면 콘솔창에 문자열이 출력된 것이 보인다.
+
+화면에는 아무것도 없는게 정상이다. (콘솔에 찍어주는 작업만 입력했으므로)
+
+service 메소드를 보면 HttpServletRequest와 HttpServletResponse 두 파라미터가 눈에 띈다.
+
+코드를 다음과 같이 수정해서 확인해보자.
+
+```
+@WebServlet(name="helloservlet", urlPatterns="/hello")
+public class HelloServlet extends HttpServlet{
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		String username = req.getParameter("username");
+      		System.out.println(username);
+        
+ 		res.setContentType("text/plain");
+		res.setCharacterEncoding("utf-8");
+		res.getWriter().write("hello "+username);
+	}
+}
+```
+
+도메인 옆에 ?키=값 형식으로 데이터를 나열하면, 파라미터를 보낼 수 있다.
+
+예를 들어 localhost:8080/hello?username=yeonlog
+
+-> username에 yeonlog라는 값을 넣어 파라미터로 보냄
+
+-> Helloservlet의 **HttpServletRequest**에 저장
+
+-> .getParameter()를 이용해 값을 꺼낼 수 있음
+
+ 
+
+**HttpServletResponse**는 Client로 보낼 값에 대해 설정할 수 있다.
+
+위 예제코드 같은 경우에는 ContentType과 Encoding 타입에 대해 설정한 뒤, hello + username을 보냈다.
+
+도메인에 접속하면 아래와 같이 결과를 확인할 수 있다.
+
+## html 파일 생성
+
+이제 src/main에 webapps 폴더를 만든 뒤, index.html과 basic.html 파일을 생성하겠다.
+
+(우리의 주 목적은 백엔드 개발이니 html에 관한 설명은 생략한다.)
+
+basic.html 외에 다른 /servlet/members/new-form 같은 링크들은 이후 차근차근 추가해나갈 것이다.
+
+**index.html**
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+ <title>Title</title>
+</head>
+<body>
+	<ul>
+		 <li><a href="basic.html">서블릿 basic</a></li>
+		 <li>서블릿
+			 <ul>
+				 <li><a href="/servlet/members/new-form">회원가입</a></li>
+				 <li><a href="/servlet/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>JSP
+			 <ul>
+				 <li><a href="/jsp/members/new-form.jsp">회원가입</a></li>
+				 <li><a href="/jsp/members.jsp">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>서블릿 MVC
+			 <ul>
+				 <li><a href="/servlet-mvc/members/new-form">회원가입</a></li>
+				 <li><a href="/servlet-mvc/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>FrontController - v1
+			 <ul>
+				 <li><a href="/front-controller/v1/members/new-form">회원가입</a></li>
+				 <li><a href="/front-controller/v1/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>FrontController - v2
+			 <ul>
+				 <li><a href="/front-controller/v2/members/new-form">회원가입</a></li>
+				 <li><a href="/front-controller/v2/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>FrontController - v3
+			 <ul>
+				 <li><a href="/front-controller/v3/members/new-form">회원가입</a></li>
+				 <li><a href="/front-controller/v3/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>FrontController - v4
+			 <ul>
+				 <li><a href="/front-controller/v4/members/new-form">회원가입</a></li>
+				 <li><a href="/front-controller/v4/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>FrontController - v5 - v3
+			 <ul>
+				 <li><a href="/front-controller/v5/v3/members/new-form">회원가입</a></li>
+				 <li><a href="/front-controller/v5/v3/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>FrontController - v5 - v4
+			 <ul>
+				 <li><a href="/front-controller/v5/v4/members/new-form">회원가입</a></li>
+				 <li><a href="/front-controller/v5/v4/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>SpringMVC - v1
+			 <ul>
+				 <li><a href="/springmvc/v1/members/new-form">회원가입</a></li>
+				 <li><a href="/springmvc/v1/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>SpringMVC - v2
+			 <ul>
+				 <li><a href="/springmvc/v2/members/new-form">회원가입</a></li>
+				 <li><a href="/springmvc/v2/members">회원목록</a></li>
+			 </ul>
+		 </li>
+		 <li>SpringMVC - v3
+			 <ul>
+				 <li><a href="/springmvc/v3/members/new-form">회원가입</a></li>
+				 <li><a href="/springmvc/v3/members">회원목록</a></li>
+			 </ul>
+		 </li>
+	</ul>
+</body>
+</html>
+```
+
+**basic.html**
+<!DOCTYPE html>
+<html>
+  <head>
+     <meta charset="UTF-8">
+     <title>Title</title>
+  </head>
+  <body>
+    <ul>
+       <li>hello 서블릿
+         <ul>
+            <li><a href="/hello?username=servlet">hello 서블릿 호출</a></li>
+         </ul>
+       </li>
+       <li>HttpServletRequest
+         <ul>
+           <li><a href="/request-header">기본 사용법, Header 조회</a></li>
+           <li>HTTP 요청 메시지 바디 조회
+             <ul>
+               <li><a href="/request-param?username=hello&age=20">GET -쿼리 파라미터</a></li>
+               <li><a href="/basic/hello-form.html">POST - HTML Form</a></li>
+               <li>HTTP API - MessageBody -> Postman 테스트</li>
+             </ul>
+           </li>
+         </ul>
+       </li>
+       <li>HttpServletResponse
+         <ul>
+           <li><a href="/response-header">기본 사용법, Header 조회</a></li>
+           <li>HTTP 요청 메시지 바디 조회
+             <ul>
+               <li><a href="/response-html">HTML 응답</a></li>
+               <li><a href="/response-json">HTTP API JSON 응답</a></li>
+             </ul>
+           </li>
+         </ul>
+       </li>
+    </ul>
+  </body>
+</html>
+```
