@@ -387,3 +387,156 @@ basic.html 외에 다른 /servlet/members/new-form 같은 링크들은 이후 �
   </body>
 </html>
 ```
+
+## HttpServletRequest 
+
+HTTP 요청 메시지를 편리하게 사용할 수 있도록 하는 객체
+
+### HTTP 요청 메시지
+
+- START LINE: HTTP 메소드, URL 쿼리 스트링, 스키마, 프로토콜
+- HEADER: 헤더 조회
+- BODY: form 파라미터 형식 조회, message body 데이터 직접 조회
+
+### HttpServletRequset 객체의 여러 기능
+- 임시 저장소 기능: 해당 http 요청 시작부터 끝날 때 가지 유지
+- 세션 관리 기능
+
+## HTTP 요청 데이터 - GET, POST, Text, JSON
+
+### GET 쿼리 파라미터
+
+**GET URL 쿼리 파라미터**의 기본구조는 다음과 같다.
+
+```java
+@WebServlet(name="requestParamServlet", urlPatterns = "/request-param")
+public class RequestParamServlet extends HttpServlet{
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		...
+        	res.getWriter().write("ok");
+	}
+}
+```
+도메인주소/request-param을 통해 접근이 가능하며,
+
+도메인주소/request-param?키=값을 통해 파라미터를 전달할 수 있다.
+
+여러개의 파라미터를 전달할 경우 & 기호를 이용해 나열하면 된다.
+
+(ex: http://localhost:8080/request-param?username=kim&age=20)
+
+1. 파라미터 전체 조회하기
+```java
+System.out.println("[전체 파라미터 조회] - start ");
+req.getParameterNames().asIterator()
+	.forEachRemaining(paramName -> System.out.println(paramName + "=" + req.getParameter(paramName)));
+System.out.println("[전체 파라미터 조회] - end ");
+```
+
+- getParameterNames(): 파라미터 이름 목록을 가져오기
+- asIterator(): 이터레이터로 변환
+- forEachRemaining(): 각 요소에 대해 지정된 작업 수행
+- getParameter(): 파라미터 키 이름을 이용해 키 값 가져오기
+
+2. 단일 파라미터 조회하기
+```java
+System.out.println("[단일 파라미터 조회] - start ");
+String username = req.getParameter("username");
+String age = req.getParameter("age");
+System.out.println(username + age);
+System.out.println("[단일 파라미터 조회] - end ");
+```
+
+만약 복수 파라미터를 입력했는데 .getParameter()를 사용한다면, 첫 번째로 입력한 파라미터의 값을 가져온다.
+
+( ex: http://localhost:8080/request-param?username=a&username=b&username=c 라면,
+
+req.getParameter("username")을 했을 때, a 값이 가져와진다. )
+
+3. 복수 파라미터 조회하기
+```java
+System.out.println("[복수 파라미터 조회] - start ");
+String[] usernames = req.getParameterValues("username");
+for(String name:usernames)  {
+	System.out.println(name);
+}
+System.out.println("[복수 파라미터 조회] - end ");
+```
+
+- getParameterValues(): 복수 파라미터에 대한 모든 값 가져오기
+
+### POST HTML Form
+
+먼저 Form 태그를 이용하는 html 화면을 하나 생성한다.
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+	 <meta charset="UTF-8">
+	 <title>Title</title>
+</head>
+<body>
+	<form action="/request-param" method="post">
+		 username: <input type="text" name="username" />
+		 age: <input type="text" name="age" />
+		 <button type="submit">전송</button>
+	</form>
+</body>
+</html>
+```
+
+ 
+
+html 코드를 보면 <form>태그의 action이 /request-param으로 되어있는데,
+
+이는 앞에서 Get 쿼리 파라미터 테스트용으로 만든 파일과 이어진다.
+
+전송 버튼을 누르면 Get URL 쿼리 파라미터 테스트 했을 때처럼 콘솔 창에 조회된 파라미터들을 확인할 수 있다.
+
+ 
+
+위에서 테스트 했던 것은 GET 방식이고, 이번엔 POST로 보낸 것인데 왜 작동하는걸까?
+
+- 각각의 전송 결과에서 Content-Type을 살펴보자 (Content-Type: HTTP 메시지 바디의 데이터 형식 지정)
+
+- GET의 Content-Type은 존재하지 않는다.
+
+- POST의 Content-Type이 application/x-www-form-urlencoded인 것을 확인할 수 있다.
+
+-> GET은 메시지 바디를 사용하지 않기 때문에 Content-Type이 없어도 무방하지만, POST는 메시지 바디를 사용하기에 Form 태그가 Content-Type을 지정해준다.
+
+=>  클라이언트에서는 보내는 형식이 다르다고 생각하지만, 서버 입장에서는 둘의 형식은 동일하므로 메소드를 그대로 사용해도 무방하다.
+
+### API 메시지 바디
+
+GET과 POST 같은 HTTP 요청은 메시지 바디에 원하는 데이터를 담아서 전송할 수 있다.
+
+보통은 JSON 형식을 많이 사용하지만 옛날에는 XML을 이용하기도 했다.
+
+#### Text
+
+가장 기본적인 Text 형식이다.
+
+```java
+@WebServlet(name="requestBodyStringServlet", urlPatterns = "/request-body-string")
+public class RequestBodyStringServlet extends HttpServlet{
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		ServletInputStream inputStream = req.getInputStream();
+		String msgBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+		
+		System.out.println("msg Body = " + msgBody);
+		
+		res.getWriter().write("ok");
+	}
+}
+```
+
+POST 방식을 사용해야하기 때문에 Postman을 이용해 테스트했다.
+
+아래와 같이 내가 보낸 텍스트를 그대로 받아낸 것을 확인할 수 있다.
+
+![alt text](image.png)
+
