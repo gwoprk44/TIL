@@ -36,7 +36,7 @@
   - Test
     - [Jnuit5 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/test/Junit5.md)
   - Inflearn-Spring
-    - [MVC]
+    - MVC
       - [mvc-1](https://github.com/gwoprk98/TIL/blob/master/Spring/inflearn-spring/mvc-1.md)
 ## JAVA
 
