@@ -36,7 +36,8 @@
   - Test
     - [Jnuit5 정리](https://github.com/gwoprk98/TIL/blob/master/Spring/test/Junit5.md)
   - Inflearn-Spring
-    - [mvc-1](https://github.com/gwoprk98/TIL/blob/master/Spring/inflearn-spring/mvc-1.md)
+    - MVC
+      - [mvc-1](https://github.com/gwoprk98/TIL/blob/master/Spring/inflearn-spring/mvc-1.md)
 ## JAVA
 
 - [Comparable과 Comparator의 이해](https://github.com/gwoprk98/TIL/blob/master/JAVA/Comparable%EA%B3%BC%20Comparator%EC%9D%98%20%EC%9D%B4%ED%95%B4.md)
