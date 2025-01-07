@@ -12,7 +12,8 @@
 	- [프로젝트 생성](#프로젝트-생성)
 	- [hello servlet 생성](#hello-servlet-생성)
 	- [html 파일 생성](#html-파일-생성)
-
+	- [HttpServletRequest](#httpservletrequest)
+	- [HttpServletResopnse](#httpservletresponse)
 
 
 
@@ -540,3 +541,186 @@ POST 방식을 사용해야하기 때문에 Postman을 이용해 테스트했다
 
 ![alt text](image.png)
 
+#### Json
+
+위의 Text와 같은 방식으로 RequestBodyJsonServlet.java를 생성하고 Postman으로 테스트 해보았다.
+
+```java
+@WebServlet(name="requestBodyJsonServlet", urlPatterns = "/request-body-json")
+public class RequestBodyJsonServlet extends HttpServlet{
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		ServletInputStream inputStream = req.getInputStream();
+		String msgBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+		
+		System.out.println("msg Body = " + msgBody);
+		
+		res.getWriter().write("ok");
+	}
+}
+```
+
+테스트 방식이 Text에서 JSON으로 바뀐 것 외에는 다른게 없어보인다.
+
+하지만 JSON 형식은 매핑이 가능한데, 객체 하나를 생성해보자.
+
+ 
+
+HelloData.java
+
+```java
+@Getter @Setter
+public class HelloData {
+	private String username;
+	private int age;
+}
+```
+(참고로 @Getter, @Setter는 롬복 라이브러리를 이용한 것이다.)
+
+ 
+
+RequestBodyJsonServlet.java를 수정해 mapper를 이용하자.
+
+mapper는 Springboot에서 기본적으로 제공하는 Jackson을 사용했다.
+
+```java
+@WebServlet(name="requestBodyJsonServlet", urlPatterns = "/request-body-json")
+public class RequestBodyJsonServlet extends HttpServlet{
+
+	private ObjectMapper mapper = new ObjectMapper();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		ServletInputStream inputStream = req.getInputStream();
+		
+		String msgBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+		System.out.println("msg Body = " + msgBody);
+		
+		HelloData helloData = mapper.readValue(msgBody, HelloData.class);
+		System.out.println(helloData.getUsername());
+		System.out.println(helloData.getAge());
+		
+		res.getWriter().write("ok");
+	}
+}
+``` 
+
+마찬가지로 Postman으로 테스트하면 콘솔 창을 통해 객체에 잘 매핑된 것을 확인할 수 있다.
+
+## HttpServletResponse
+
+HttpServletResponse의 역할
+- HTTP 응답, 헤더, 바디 생성
+- Content-type, Cookie, Redirect 등의 기능 제공
+
+### 응답 헤더
+
+새로 response 폴더를 만들고 ResponseHeaderServlet.java를 생성했다.
+
+```java
+@WebServlet(name = "responseHeaderServlet", urlPatterns = "/response-header")
+public class ResponseHeaderServlet extends HttpServlet{
+
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		// status-line
+		res.setStatus(HttpServletResponse.SC_OK);
+		
+		// response header
+		res.setContentType("text/plain");
+		res.setCharacterEncoding("utf-8");
+		//res.setHeader("Content-Type", "text/plain;charset=utf-8");
+		res.setHeader("Cache-Contorl", "no-cache, no-store, must-revalidate");
+		res.setHeader("Pragma", "no-cache");
+		res.setHeader("temp-header", "hello world");
+
+		PrintWriter writer = res.getWriter();
+		writer.println("ok");
+	}
+}
+```
+HttpServletResponse는 기본적으로 `.setHeader()`를 통해 헤더를 세팅할 수 있다.
+
+이 외에도 `setContentType, setCharacterEncoding` 등을 사용할 수 있다.
+
+이 외에도 쿠키나 리다이렉트를 설정할 수 있는데, 예시는 아래와 같다.
+
+#### 쿠키 설정하기
+
+```java
+private void cookie (HttpServletResponse res) {
+	Cookie cookie = new Cookie("myCookie","good");
+	cookie.setMaxAge(600);
+	res.addCookie(cookie);
+}
+```
+
+#### 리다이렉트 설정하기
+
+```java
+private void redirect (HttpServletResponse res) {
+	res.setStatus(HttpServletResponse.SC_FOUND);
+	res.setHeader("Location", "/basic/hello-form.html");
+//	res.sendRedirect("/basic/hello-form.thml");
+}
+```
+
+### 응답 데이터
+
+#### Html 형식으로 응답하기
+
+ResponseHtmlServlet.java를 생성한다.
+
+```java
+@WebServlet(name="responseHtmlServlet", urlPatterns = "/response-html")
+public class ResponseHtmlServlet extends HttpServlet{
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		// Content-Type: text/html;charset=utf-8
+		res.setContentType("text/html");
+		res.setCharacterEncoding("utf-8");
+		
+		PrintWriter writer = res.getWriter();
+		writer.println("<html>");
+		writer.println("<body>");
+		writer.println(" <div>안녕?</div>");
+		writer.println("</body>");
+		writer.println("</html>");
+	}
+}
+```
+한글이 깨지는 것을 대비해 ContentType과 Encoding을 설정.
+
+#### Json 형식으로 응답하기
+
+ResponseJsonServlet.java 생성
+
+```java
+@WebServlet(name="responseJsonServlet", urlPatterns = "/response-json")
+public class ResponseJsonServlet extends HttpServlet{
+	
+	private ObjectMapper mapper = new ObjectMapper();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		res.setContentType("application/json");
+		res.setCharacterEncoding("utf-8");
+		
+		// HelloData 객체
+		HelloData helloData = new HelloData();
+		helloData.setUsername("Woo");
+		helloData.setAge(20);
+		
+		// json 형태로 바꾸기
+		String result = mapper.writeValueAsString(helloData);
+		res.getWriter().write(result);
+	}
+}
+```
+HelloData에 값을 넣고, json 형태로 바꾸고 응답을 보내줬다.
+
+추가적으로, application/json;charset=utf-8은 의미 없는 코드다.
+
+json은 기본적으로 utf-8을 사용하기 때문에..
+
+하지만 getWriter()를 사용하다보면 자동적으로 뒤에 추가되므로, 이 경우에는 getOutputStream()으로 출력하면 된다.
