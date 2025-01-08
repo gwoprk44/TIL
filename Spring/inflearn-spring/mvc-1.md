@@ -724,3 +724,121 @@ HelloData에 값을 넣고, json 형태로 바꾸고 응답을 보내줬다.
 json은 기본적으로 utf-8을 사용하기 때문에..
 
 하지만 getWriter()를 사용하다보면 자동적으로 뒤에 추가되므로, 이 경우에는 getOutputStream()으로 출력하면 된다.
+
+# 회원 관리 웹 애플리케이션
+
+회원 관리 웹 애플리케이션을 Servlet, JSP, MVC 패턴 차례대로 개발하며 비교할 것이다.
+
+회원 관리 웹 애플리케이션의 요구사항은 간단하게 구성하였다.
+
+- 회원 저장
+- 회원 목록 조회
+
+
+## Servlet으로 구성
+
+### 회원 모델 생성
+
+```java
+@Getter @Setter
+public class Member {
+	private Long id;
+	private String username;
+	private int age;
+	
+	public Member() {
+	}
+	
+	public Member(String username, int age) {
+		this.username = username;
+		this.age = age;
+	}
+}
+```
+- 아이디, 이름, 나이를 저장하는 Member 객체
+- @Getter @Setter 롬복 라이브러리를 이용하였다.
+
+### 회원 저장소 생성
+
+```java
+public class MemberRepository {
+	private static Map<Long, Member> store = new ConcurrentHashMap<> ();
+	private static long sequence = 0L;
+	
+	// 싱글톤으로 생성
+	private static final MemberRepository instance = new MemberRepository();
+	
+	public static MemberRepository getInstance() {
+		return instance;
+	}
+	
+	private MemberRepository() {
+	}
+	
+	public Member save(Member member) {
+		member.setId(++sequence);
+		store.put(member.getId(), member);
+		return member;
+	}
+	
+	public Member findById(Long id) {
+		return store.get(id);
+	}
+	
+	public List<Member> findAll() {
+		return new ArrayList<>(store.values()); //store룰 보호하기 위해 arraylist를 새로 생성
+	}
+	
+	public void clearStore() {
+		store.clear();
+	}
+}
+```
+- 멤버 저장, 아이디로 찾기, 전체 조회 기능 생성
+- clearStore은 테스트에서 사용하기 위함
+- private static final 키워드를 이용해 MemberRepository를 싱글톤으로 생성
+
+### 회원 저장소 테스트 작성
+
+```java
+public class MemberRepositoryTest {
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@AfterEach 
+	void afterEach() { // 테스트 종료 할때마다 store 날려주기
+		memberRepository.clearStore();
+	}
+	
+	@Test
+	void save() {
+		// given
+		Member member = new Member("hello",20);
+		
+		// when
+		Member savedMember = memberRepository.save(member);
+		
+		// then
+		Member findMember = memberRepository.findById(savedMember.getId());
+		Assertions.assertThat(findMember).isEqualTo(savedMember);
+	}
+	
+	@Test
+	void findAll() {
+		// given
+		Member member1 = new Member("mem1",20);
+		Member member2 = new Member("mem2",25);
+		
+		memberRepository.save(member1);
+		memberRepository.save(member2);
+		
+		// when
+		List<Member> result = memberRepository.findAll();
+		
+		// then
+		Assertions.assertThat(result.size()).isEqualTo(2);
+		Assertions.assertThat(result).contains(member1, member2);
+	}
+}
+```
+- 저장 및 전체 조회 기능 테스트
+- @AfterEach를 이용해 테스트 종료 시마다 store clear
