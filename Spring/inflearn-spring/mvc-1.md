@@ -15,7 +15,7 @@
 	- [HttpServletRequest](#httpservletrequest)
 	- [HttpServletResopnse](#httpservletresponse)
 - [회원 관리 웹 애플리케이션](#회원-관리-웹-애플리케이션)
-	- [Servlet으로 구성](#servlet으로-구성)
+	- [Servlet 이용용](#servlet-이용)
 
 
 
@@ -736,9 +736,6 @@ json은 기본적으로 utf-8을 사용하기 때문에..
 - 회원 저장
 - 회원 목록 조회
 
-
-## Servlet으로 구성
-
 ### 회원 모델 생성
 
 ```java
@@ -844,3 +841,140 @@ public class MemberRepositoryTest {
 ```
 - 저장 및 전체 조회 기능 테스트
 - @AfterEach를 이용해 테스트 종료 시마다 store clear
+
+## Servlet 이용
+
+이제 본격적으로 Servlet을 이용하여 회원 관리 웹 애플리케이션을 생성한다.
+각 서블릿은 web/servlet 패키지를 생성하여 저장하였다.
+
+
+#### MemberFormServlet
+```java
+@WebServlet(name="memberFormServlet", urlPatterns = "/servlet/members/new-form")
+public class MemberFormServlet extends HttpServlet {
+	private MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		res.setContentType("text/html");
+		res.setCharacterEncoding("utf-8");
+		
+		PrintWriter w = res.getWriter();
+		w.write("<!DOCTYPE html>\n" +
+				 "<html>\n" +
+				 "<head>\n" +
+				 " <meta charset=\"UTF-8\">\n" +
+				 " <title>Title</title>\n" +
+				 "</head>\n" +
+				 "<body>\n" +
+				 "<form action=\"/servlet/members/save\" method=\"post\">\n" +
+				 " username: <input type=\"text\" name=\"username\" />\n" +
+				 " age: <input type=\"text\" name=\"age\" />\n" +
+				 " <button type=\"submit\">전송</button>\n" +
+				 "</form>\n" +
+				 "</body>\n" +
+				 "</html>\n");
+	}
+}
+```
+
+- Content-Tyep, encoding 설정.
+- PrintWriter를 이용하여 html 코드를 직접 입력.
+
+#### MemberSaveServlet.java
+
+```java
+@WebServlet(name="memberSaveServlet", urlPatterns = "/servlet/members/save")
+public class MemberSaveServlet extends HttpServlet {
+	private MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		System.out.println("MemberSaveServlet.service");
+		String username = req.getParameter("username");
+		int age = Integer.parseInt(req.getParameter("age"));
+		
+		Member member = new Member(username, age);
+		memberRepository.save(member);
+		
+		res.setContentType("text/html");
+		res.setCharacterEncoding("utf-8");
+		PrintWriter w = res.getWriter();
+		w.write("<html>\n" +
+				 "<head>\n" +
+				 " <meta charset=\"UTF-8\">\n" +
+				 "</head>\n" +
+				 "<body>\n" +
+				 "성공\n" +
+				 "<ul>\n" +
+				 " <li>id="+member.getId()+"</li>\n" +
+				 " <li>username="+member.getUsername()+"</li>\n" +
+				 " <li>age="+member.getAge()+"</li>\n" +
+				 "</ul>\n" +
+				 "<a href=\"/index.html\">메인</a>\n" +
+				 "</body>\n" +
+				 "</html>");
+	}
+}
+```
+
+- MemberFormServlet에서 호출되는 /servlet/members/save 부분
+- 성공 시 member에서 정보를 가져와 화면에 보여줌
+
+#### MemberListServlet.java
+
+```java
+@WebServlet(name="memberListServlet", urlPatterns = "/servlet/members")
+public class MemberListServlet extends HttpServlet {
+	private MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		List<Member> members = memberRepository.findAll();
+		
+		res.setContentType("text/html");
+		res.setCharacterEncoding("utf-8");
+		
+		PrintWriter w = res.getWriter();
+		w.write("<html>");
+		 w.write("<head>");
+		 w.write(" <meta charset=\"UTF-8\">");
+		 w.write(" <title>Title</title>");
+		 w.write("</head>");
+		 w.write("<body>");
+		 w.write("<a href=\"/index.html\">메인</a>");
+		 w.write("<table>");
+		 w.write(" <thead>");
+		 w.write(" <th>id</th>");
+		 w.write(" <th>username</th>");
+		 w.write(" <th>age</th>");
+		 w.write(" </thead>");
+		 w.write(" <tbody>");
+
+		 for (Member member : members) {
+		 w.write(" <tr>");
+		 w.write(" <td>" + member.getId() + "</td>");
+		 w.write(" <td>" + member.getUsername() + "</td>");
+		 w.write(" <td>" + member.getAge() + "</td>");
+		 w.write(" </tr>");
+		 }
+		 
+		 w.write(" </tbody>");
+		 w.write("</table>");
+		 w.write("</body>");
+		 w.write("</html>");
+	}
+}
+```
+
+- for문에서 보듯 동적으로 데이터 추가 가능
+
+
+예제를 통해 보듯이 **Servlet은 너무 불편**하다.
+
+Printwriter를 통해 html을 다 작성해야해서 비효율적이고 Java 코딩이라기보다 html의 코딩이라는 느낌이 강하다.
+
+이를 좀더 편리하게 개선하기 위해 나온 것이 **JSP**이다. 
+
+
+
