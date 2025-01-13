@@ -15,7 +15,8 @@
 	- [HttpServletRequest](#httpservletrequest)
 	- [HttpServletResopnse](#httpservletresponse)
 - [회원 관리 웹 애플리케이션](#회원-관리-웹-애플리케이션)
-	- [Servlet 이용용](#servlet-이용)
+	- [Servlet 이용](#servlet-이용)
+	- [JSP 이용](#jsp-이용용)
 
 
 
@@ -975,6 +976,115 @@ public class MemberListServlet extends HttpServlet {
 Printwriter를 통해 html을 다 작성해야해서 비효율적이고 Java 코딩이라기보다 html의 코딩이라는 느낌이 강하다.
 
 이를 좀더 편리하게 개선하기 위해 나온 것이 **JSP**이다. 
+
+## JSP 이용
+
+### new-form
+```java
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+ 	<title>Title</title>
+</head>
+<body>
+	<form action="/jsp/members/save.jsp" method="post">
+		 username: <input type="text" name="username" />
+		 age: <input type="text" name="age" />
+		 <button type="submit">전송</button>
+	</form>
+</body>
+</html>
+```
+- name, age를 입력해 button을 누르면, form 태그를 이용해 /jsp/members/save.jsp로 데이터 전송
+
+### save.jsp
+```java
+<%@ page import="hello.servlet.domain.member.MemberRepository" %>
+<%@ page import="hello.servlet.domain.member.Member" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+	 MemberRepository memberRepository = MemberRepository.getInstance();
+	 System.out.println("save.jsp");
+	 
+	 String username 	= request.getParameter("username");
+	 int 	age 		= Integer.parseInt(request.getParameter("age"));
+	 
+	 Member member = new Member(username, age);
+	 System.out.println("member = " + member);
+	 
+	 memberRepository.save(member);
+%>
+<html>
+<head>
+ 	<meta charset="UTF-8">
+</head>
+<body>
+	성공
+	<ul>
+		 <li>id=<%=member.getId()%></li>
+		 <li>username=<%=member.getUsername()%></li>
+		 <li>age=<%=member.getAge()%></li>
+	</ul>
+	<a href="/index.html">메인</a>
+</body>
+</html>
+```
+- <%@ page import="" %>를 이용해 import
+- <% %> java 코드 입력
+- <%= %> java 코드 출력
+
+### members.jsp
+```java
+<%@ page import="java.util.List" %>
+<%@ page import="hello.servlet.domain.member.MemberRepository" %>
+<%@ page import="hello.servlet.domain.member.Member" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	List<Member> members = memberRepository.findAll();
+%>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+</head>
+<body>
+	<a href="/index.html">메인</a>
+	<table>
+		 <thead>
+			 <th>id</th>
+			 <th>username</th>
+			 <th>age</th>
+		 </thead>
+		 <tbody>
+		<%
+			for(Member member: members) {
+				out.write(" <tr>");
+				out.write(" 	<td>" + member.getId() + "</td>");
+				out.write(" 	<td>" + member.getUsername() + "</td>");
+				out.write(" 	<td>" + member.getAge() + "</td>");
+				out.write(" </tr>");
+			}
+		%>
+		 </tbody>
+	</table>
+</body>
+```
+
+JSP는 Servlet에 비해 많이 편리해졌다.
+
+동적으로 실행하는 부분을 제외하고는 Java와 Html이 분리되어있다.
+
+하지만 여전히 Java코드와 html코드를 섞여있다는 느낌이 강하다.
+
+ 
+
+JSP 역할이 너무 크고 현재의 예시는 굉장히 간단한 편이지만.
+
+실무에서는 이렇게 간단한 수준에서 그칠 수 없어 코드가 몇천 몇만줄이 되기도 해서 유지보수가 굉장히 힘들다.
+
+이를 개선하기 위한 것이 MVC패턴으로 Java코드와 html 코드를 완전히 분리하기 시작한다.
 
 
 
