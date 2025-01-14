@@ -17,6 +17,8 @@
 - [회원 관리 웹 애플리케이션](#회원-관리-웹-애플리케이션)
 	- [Servlet 이용](#servlet-이용)
 	- [JSP 이용](#jsp-이용)
+	- [MVC 패턴 이용](#mvc-패턴-이용)
+- [MVC 프레임워크 만들기](#mvc-프레임워크-만들기)
 
 
 
@@ -1256,4 +1258,150 @@ Servlet 또는 JSP만 사용했을 때보다는 **코드가 깔끔하고 직관�
 
 Controller 호출 전에 공통 기능을 처리할 수 있게 한다.
 
+# MVC 프레임워크 만들기
 
+기존의 패턴은 다음과 같다.
+
+![alt text](front1.png)
+
+각 클라이언트들은 Controller A, B, C에 대해 각각 호출한다.
+
+공통 코드들은 별도로 처리되어 있지 않고 각 Controller에 포함되어 있다.
+
+하지만 프론트 컨트롤러 패턴을 도입한다면 다음과 같이 변하게 된다.
+
+![alt text](front2.png)
+
+각 클라이언트들은 Front Controller에 요청을 보내고,
+
+**Front Controller은 각 요청에 맞는 컨트롤러를 찾아서 호출시킨다.**
+
+**공통 코드**에 대해서는 **Front Controller**에서 처리하고, 서로 다른 코드들만 각 Controller에서 처리할 수 있도록 한다.
+
+장점을 정리해보자면,
+
+**공통 코드 처리가 가능** 
+Front Controller 외 다른 Controller에서 Servlet 사용하지 않아도 된다.
+ 
+스프링 웹 MVC의 핵심도 위 같은 FrontController이다.
+
+스프링 웹 MVC의 DispatcherServlet이 FrontController 패턴으로 구현되어 있다.
+
+이제 앞에서 계속 개발했던 회원 관리 웹 어플리케이션에 FrontController를 적용해보겠다.
+
+한번에 Spring MVC 패턴에 맞추는 것이 아니라 기존 코드를 최대한 살려가며 버전을 업그레이드 하는 방식으로 변화시킬 것이다.
+
+## V1
+
+
+### ControllerV1
+```java
+public interface ControllerV1 {
+	void process(HttpServletRequest req, HttpServletResponse res) throws ServletException,IOException;
+}
+```
+
+### MemberFormControllerV1
+```java
+public class MemberFormControllerV1 implements ControllerV1{
+	@Override
+	public void process(HttpServletRequest req, HttpServletResponse res) throws ServletException,IOException {
+		String viewPath = "/WEB-INF/views/new-form.jsp";	 
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath); 
+		dispatcher.forward(req, res);
+	}
+}
+```
+
+### MemberSaveControllerV1
+```java
+public class MemberSaveControllerV1 implements ControllerV1{
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	public void process(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		String username = req.getParameter("username");
+		int age = Integer.parseInt(req.getParameter("age"));
+		
+		Member member = new Member(username, age);
+		memberRepository.save(member);
+		req.setAttribute("member", member);
+		
+		String viewPath = "/WEB-INF/views/save-result.jsp";	
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath); 
+		dispatcher.forward(req, res);
+	}
+}
+```
+
+### MemberListCntrollerV1
+```java
+public class MemberListControllerV1 implements ControllerV1{
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	public void process(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		List<Member> members = memberRepository.findAll();
+		req.setAttribute("members", members);
+		
+		String viewPath = "/WEB-INF/views/members.jsp";	
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath); 
+		dispatcher.forward(req, res);	
+	}
+}
+```
+
+위의 컨트롤러들은 이전에 사용한 컨트롤러와 로직이 같으므로 설명은 생략한다.
+
+이제 가장 중요한 Front Controller을 생성할것인데 이는 위에서 만든 컨트롤러 보다 한 단계 상위의 패키지에 생성한다.
+
+### FrontControllerServletV1
+```java
+@WebServlet(name = "frontControllerServletV1", urlPatterns = "/front-controller/v1/*")
+public class FrontControllerServletV1 extends HttpServlet {
+	
+	private Map<String, ControllerV1> controllerMap = new HashMap<>();
+	
+	public FrontControllerServletV1() {
+		controllerMap.put("/front-controller/v1/members/new-form", new MemberFormControllerV1());
+		controllerMap.put("/front-controller/v1/members/save", new MemberSaveControllerV1());
+		controllerMap.put("/front-controller/v1/members", new MemberListControllerV1());
+	}
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		System.out.println("FrontControllerServletV1.service");
+		
+		String reqURI = req.getRequestURI();
+		ControllerV1 controller = controllerMap.get(reqURI);
+		
+		if(controller == null) {
+			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
+		controller.process(req, res);
+	}
+}
+```
+
+- urlPatterns = "/front-controller/v1/*": front-controller/v1 하위의 모든 항목에 대해 해당 서블릿 실행
+- 생성자: 각 url에 대해 Controller를 매핑하기 위해 Map에 데이터를 put
+- request에 대한 URI 값을 가져와서 controllerMap에서 어떤 컨트롤러에 매핑 되었는지 찾는다
+- 만약 controller가 존재하지 않는다면 404 에러 처리
+ 
+위에서 설명했던 그림을 예제 코드와 함께 다시 살펴보면
+
+![alt text](front2.png)
+
+각 클라이언트들은 /front-controller/v1 하위의 어떤 경로를 접속하던간에 Front Controller으로 이동한다.
+
+예를 들어, localhost:8080/front-controller/v1/members에 접속했다고 가정하자.
+
+1. @WebServlet의 urlPatterns에 의해 FrontControllerServletV1으로 이동
+2. 접속한 URI를 받고, ControllerV1 controller 변수에 MemberListControllerV1 저장 (Map에서 꺼내옴)
+3. MemberListControllerV1의 process 실행
+ 
+front Controller를 사용하여 코드를 개선했지만 여전히 Controller에서 RequestDispatcher을 이용해 view로 이동한다는 코드가 계속 반복되고 있다.
+
+다음에는 이를 개선하는 방법을 배워볼 것이다.
