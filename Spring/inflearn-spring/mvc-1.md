@@ -1092,7 +1092,7 @@ JSP 역할이 너무 크고 현재의 예시는 굉장히 간단한 편이지만
 
 예제에 들어가기 앞서 MVC 패턴에 대해 간단히 설명하겠다.
 
-![alt text](image.png)
+![alt text](/assets/front1.png)
 
 
 - 프로젝트 구성 요소를 Model, View, Controller 3가지로 나눈 패턴
@@ -1262,7 +1262,7 @@ Controller 호출 전에 공통 기능을 처리할 수 있게 한다.
 
 기존의 패턴은 다음과 같다.
 
-![alt text](/assets/front1.png)
+![alt text](/assets/front2.png)
 
 각 클라이언트들은 Controller A, B, C에 대해 각각 호출한다.
 
@@ -1270,7 +1270,7 @@ Controller 호출 전에 공통 기능을 처리할 수 있게 한다.
 
 하지만 프론트 컨트롤러 패턴을 도입한다면 다음과 같이 변하게 된다.
 
-![alt text](/assets/front2.png)
+![alt text](/assets/front1.png)
 
 각 클라이언트들은 Front Controller에 요청을 보내고,
 
@@ -1392,7 +1392,7 @@ public class FrontControllerServletV1 extends HttpServlet {
  
 위에서 설명했던 그림을 예제 코드와 함께 다시 살펴보면
 
-![alt text](/assets/front2.png)
+![alt text](/assets/front1.png)
 
 각 클라이언트들은 /front-controller/v1 하위의 어떤 경로를 접속하던간에 Front Controller으로 이동한다.
 
