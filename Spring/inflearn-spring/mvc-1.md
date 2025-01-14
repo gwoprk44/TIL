@@ -16,7 +16,7 @@
 	- [HttpServletResopnse](#httpservletresponse)
 - [회원 관리 웹 애플리케이션](#회원-관리-웹-애플리케이션)
 	- [Servlet 이용](#servlet-이용)
-	- [JSP 이용](#jsp-이용용)
+	- [JSP 이용](#jsp-이용)
 
 
 
@@ -1086,5 +1086,174 @@ JSP 역할이 너무 크고 현재의 예시는 굉장히 간단한 편이지만
 
 이를 개선하기 위한 것이 MVC패턴으로 Java코드와 html 코드를 완전히 분리하기 시작한다.
 
+## MVC 패턴 이용
+
+예제에 들어가기 앞서 MVC 패턴에 대해 간단히 설명하겠다.
+
+![alt text](image.png)
+
+
+- 프로젝트 구성 요소를 Model, View, Controller 3가지로 나눈 패턴
+	- Model: View에 출력할 데이터 담아두기
+	- View: Model에 담긴 데이터를 사용해 화면 그려내기
+	- Controller: HTTP 요청을 받아 파라미터 검증 및 비즈니스 로직 실행. View에 전달할 결과 데이터를 Model에 담기
+
+> WEB-INF 폴더
+
+WEB-INF는 외부에서 직접 호출이 불가능하게 하기 위한 일종의 약속이다.
+
+예를 들어, localhost:8080/파일.jsp 는 직접 링크를 입력해서 접근할 수 있다.
+
+하지만 파일.jsp를 WEB-INF 안에 넣는다면?
+
+localhost:8080/WEB-INF/파일.jsp 링크를 입력해도 접근이 불가능하다.
+
+Controller를 이용해 WEB-INF/파일.jsp에는 접근이 가능하지만, 직접 도메인을 입력하면 접근이 불가능하다.
+
+### MvcMemberFormServlet.java
+
+```java
+@WebServlet(name = "mvcMemberFormSerlvet", urlPatterns = "/servlet-mvc/members/new-form")
+public class MvcMemberFormServlet extends HttpServlet{
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		String viewPath = "/WEB-INF/views/new-form.jsp";
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath);
+		dispatcher.forward(req, res);
+	}
+}
+```
+- /servlet-mvc/members/new-form을 통해 접근 가능
+- /WEB-INF/views/new-form.jsp으로 접근
+- req.getRequestDispatcher(): 다른 servlet 또는 JSP로 이동 가능
+- dispatcher.redirect(): 클라이언트에 응답이 갔다가 redirect 경로로 다시 요청
+- dispatcher.forward(): 서버 내부에서 호출하고 끝. 클라이언트가 인지할 수 X
+
+### new-form.jsp
+```html
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+ 	<title>Title</title>
+</head>
+<body>
+<!-- 	<form action="/servlet-mvc/members/save" method="post"> -->
+	<form action="save" method="post">
+		username: <input type="text" name="username" />
+		age: <input type="text" name="age" />
+	 	<button type="submit">전송</button>
+	</form>
+</body>
+</html>
+```
+
+### MvcMemberSaveServlet.java
+```java
+@WebServlet(name = "mvcMemberSaveSerlvet", urlPatterns = "/servlet-mvc/members/save")
+public class MvcMemberSaveServlet extends HttpServlet{
+	
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		String username = req.getParameter("username");
+		int age = Integer.parseInt(req.getParameter("age"));
+		
+		Member member = new Member(username, age);
+		memberRepository.save(member);
+		
+		// Model에 데이터 보관
+		req.setAttribute("member", member);
+		
+		String viewPath = "/WEB-INF/views/save-result.jsp";	// WEB-INF 이하의 자원들은 외부의 직접 호출 X. 컨트롤러 통해서 호출 O. 
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath); // 다른 servlet이나 JSP로 이동 가능
+		dispatcher.forward(req, res);	// redirect: 클라이언트가 다시 요청. forward: 서버에서 호출하고 끝. 클라이언트가 인지 x.
+	}
+}
+```
+
+### save-result.jsp
+```html
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+	<meta charset="UTF-8">
+</head>
+<body>
+	성공
+	<ul>
+		 <li>id=${member.id}</li> <%-- <%=((Member)request.getAttribute("member")).getId()%> --%>
+		 <li>username=${member.username}</li>
+		 <li>age=${member.age}</li>
+	</ul>
+	<a href="/index.html">메인</a>
+</body>
+</html>
+```
+
+### MvcMemberListServlet.java
+```java
+@WebServlet(name = "mvcMemberListSerlvet", urlPatterns = "/servlet-mvc/members")
+public class MvcMemberListServlet extends HttpServlet{
+	
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		
+		List<Member> members = memberRepository.findAll();
+		req.setAttribute("members", members);
+		
+		String viewPath = "/WEB-INF/views/members.jsp";	
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath); 
+		dispatcher.forward(req, res);	
+	}
+}
+```
+
+### members.jsp
+```html
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<html>
+<head>
+ <meta charset="UTF-8">
+ <title>Title</title>
+</head>
+<body>
+	<a href="/index.html">메인</a>
+	<table>
+		 <thead>
+			 <th>id</th>
+			 <th>username</th>
+			 <th>age</th>
+		 </thead>
+		 <tbody>
+			 <c:forEach var="item" items="${members}"> <!-- 반복문 -->
+				 <tr>
+					 <td>${item.id}</td>
+					 <td>${item.username}</td>
+					 <td>${item.age}</td>
+				 </tr>
+			 </c:forEach>
+		 </tbody>
+	</table>
+</body>
+</html>
+```
+
+Servlet 또는 JSP만 사용했을 때보다는 **코드가 깔끔하고 직관적**이게 됐다.
+
+다만, 위 작업을 따라하다 보면 비슷한 **행위가 반복**된다는 것이 느껴질 것이다.
+
+특히 Controller마다 RequestDispatcher를 호출하고 보내주는 작업이 반복된다.
+
+이후에 비슷한 기능을 하는 Controller를 **공통으로 처리하기 어렵다.**
+
+여기서 등장한 것이 **프론트 컨트롤러 패턴**이다.
+
+스프링 MVC의 핵심도 이 프론트 컨트롤러 패턴에 있는데,
+
+Controller 호출 전에 공통 기능을 처리할 수 있게 한다.
 
 
