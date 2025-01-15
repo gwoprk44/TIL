@@ -21,7 +21,7 @@
 - [MVC 프레임워크 만들기](#mvc-프레임워크-만들기)
 	- [V1 프론트 컨트롤러](#v1-프론트-컨트롤러)
 	- [V2 View 분리](#v2-view-분리)
-	- [V3 Model 추가](#v3-model-추가)
+	- [V3 Model 분리](#v3-model-분리)
 
 
 
@@ -1546,4 +1546,185 @@ Client들은 Front Controller를 통해 req 값에 따라 적절한 Controller�
 
 중복되는 코드가 거의 사라졌다.
 
-## V3 Model 추가
+## V3 Model 분리
+
+현재 코드의 문제점
+
+1. 컨트롤러는 매번 사용하지도 않는 HttpServletRequest, HttpServletResponse를 받는다.
+2. "/WEB-INF/views/new-form.jsp" 같은 경로에서 "/WEB-INF/views" 같이 경로가 반복된다.
+ 
+현재 서블릿에서 종속성을 제거하기 위해 Model과 View 이름을 전달하는 객체 ModelView를 생성할 것이다.
+
+ModelView는 MyView와 마찬가지로 다른 버전에서도 계속 사용하기 위해 상위 패키지에 둔다.
+
+![alt text](/assets/mvst.png)
+
+### ModelView
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class ModelView {
+    private String viewName;
+    private Map<String, Object> model = new HashMap<>();
+
+    public ModelView(String viewName) {
+        this.viewName = viewName;
+    }
+
+    public String getViewName() {
+        return viewName;
+    }
+
+    public void setViewName(String viewName) {
+        this.viewName = viewName;
+    }
+
+    public Map<String, Object> getModel() {
+        return model;
+    }
+
+    public void setModel(Map<String, Object> model) {
+        this.model = model;
+    }
+}
+```
+
+- getter, setter 생성, 롬복 라이브러리를 이용하는 편이 편리했을 것 같다.
+
+### ControllerV3
+```java
+public interface ControllerV3 {
+	ModelView process(Map<String, String> paramMap);
+}
+```
+- ModelView 형태로 return한다.
+
+이제 마찬가지로 컨트롤러 3개를 추가한다.
+
+### MemberFormControllerV3
+```java
+public class MemberFormControllerV3 implements ControllerV3{
+	@Override
+	public ModelView process(Map<String, String> paramMap) {
+		return new ModelView("new-form");
+	}
+}
+```
+- /WEB-INF/views/v3/new-form.jsp 물리 경로를 쓰는게 아니라 new-form이라는 고유한 view 이름만 입력한다.
+
+### MemberSaveControllerV3
+```java
+public class MemberSaveControllerV3 implements ControllerV3{
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	public ModelView process(Map<String, String> paramMap) {
+		String username = paramMap.get("username");
+		int age = Integer.parseInt(paramMap.get("age"));
+		
+		Member member = new Member(username, age);
+		memberRepository.save(member);
+		
+		ModelView mv = new ModelView("save-result");
+		mv.getModel().put("member", member);
+		
+		return mv;
+	}
+}
+```
+- 기존의 HttpServletRequest 대신 Map을 사용 -> Map.get()메서드를 이용한다.
+- Member를 선언해 Repository에 save한 뒤, ModelView에 view 이름 전달
+- ModelView 안의 Map에 member를 put하고 return 시켜준다.
+
+### MemberListControllerV3
+```java
+public class MemberListControllerV3 implements ControllerV3{
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	public ModelView process(Map<String, String> paramMap) {
+		List<Member> members = memberRepository.findAll();
+		ModelView mv = new ModelView("members");
+		mv.getModel().put("members", members);
+		
+		return mv;
+	}
+}
+```
+
+### FrontControllerServletV3
+
+```java
+@WebServlet(name = "frontControllerServletV3", urlPatterns = "/front-controller/v3/*")
+public class FrontControllerServletV3 extends HttpServlet {
+	
+	private Map<String, ControllerV3> controllerMap = new HashMap<>();
+	
+	public FrontControllerServletV3() {
+		controllerMap.put("/front-controller/v3/members/new-form", new MemberFormControllerV3());
+		controllerMap.put("/front-controller/v3/members/save", new MemberSaveControllerV3());
+		controllerMap.put("/front-controller/v3/members", new MemberListControllerV3());
+	}
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		String reqURI = req.getRequestURI();
+		
+		ControllerV3 controller = controllerMap.get(reqURI);
+		if(controller == null) {
+			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
+		Map<String, String> paramMap = createParam(req);
+		ModelView mv = controller.process(paramMap);
+		
+		String viewName = mv.getViewName();
+		MyView view = viewResolver(viewName);
+		view.render(mv.getModel(), req, res);
+	}
+	
+	private Map<String, String> createParam(HttpServletRequest req) {
+		Map<String, String> paramMap = new HashMap<>();
+		req.getParameterNames().asIterator()
+		 		.forEachRemaining(paramName -> paramMap.put(paramName, req.getParameter(paramName)));
+		return paramMap;
+	}
+	
+	private MyView viewResolver(String viewName) {
+		return new MyView("/WEB-INF/views/" + viewName + ".jsp");
+	}
+}
+```
+- reqURI를 받아와서 해당 URI에 대한 controller를 ControllerV3 controller에 저장.
+- paramMap에 HttpServletRequest의 파라미터들 저장.
+- ModelView mv에 controller.process의 실행 결과인 ModelView 객체 저장
+- mv에서 viewName을 가져오고 viewResolver() 메소드를 통해 MyView 생성
+- 생성된 MyView에서 render() 함수를 실행
+
+### MyView
+```java
+...
+public void render(Map<String, Object> model, HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+	modelToRequestAttribute(model, req);
+	RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath);
+	dispatcher.forward(req, res);
+}
+	
+private void modelToRequestAttribute(Map<String, Object> model, HttpServletRequest req) {
+	model.forEach((key,value)-> req.setAttribute(key, value));
+}
+...
+```
+
+- Map을 받는 render 메소드를 추가
+- modelToRequestAttribute를 보면 forEach를 돌며 HttpServletRequest에 .setAttribute()를 작업 실행
+
+![img](/assets/model.png)
+
+1. Client는 Front Controller로 접근
+2. Front Controller는 request에 따라 적절한 Controller 배치
+3. Controller에서 ModelView에 데이터 저장 후 반환
+4. Controller에서 반환한 ModelView에서 viewName을 가져와 MyView 생성
+5. MyView의 render() 실행
