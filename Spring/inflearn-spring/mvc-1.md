@@ -19,6 +19,9 @@
 	- [JSP 이용](#jsp-이용)
 	- [MVC 패턴 이용](#mvc-패턴-이용)
 - [MVC 프레임워크 만들기](#mvc-프레임워크-만들기)
+	- [V1 프론트 컨트롤러](#v1-프론트-컨트롤러)
+	- [V2 View 분리](#v2-view-분리)
+	- [V3 Model 추가](#v3-model-추가)
 
 
 
@@ -1291,7 +1294,7 @@ Front Controller 외 다른 Controller에서 Servlet 사용하지 않아도 된�
 
 한번에 Spring MVC 패턴에 맞추는 것이 아니라 기존 코드를 최대한 살려가며 버전을 업그레이드 하는 방식으로 변화시킬 것이다.
 
-## V1
+## V1 프론트 컨트롤러
 
 
 ### ControllerV1
@@ -1405,3 +1408,142 @@ public class FrontControllerServletV1 extends HttpServlet {
 front Controller를 사용하여 코드를 개선했지만 여전히 Controller에서 RequestDispatcher을 이용해 view로 이동한다는 코드가 계속 반복되고 있다.
 
 다음에는 이를 개선하는 방법을 배워볼 것이다.
+
+## V2 View 분리
+
+지금 부터는 view를 분리하는 리팩토링을 진행할것이다.
+
+프로젝트 구조는 다음과 같고, MyView는 이후 버전에도 사용하므로 v2보다 상위의 패키지에 위치시켰다.
+
+![alt text](/assets/Viewst.png)
+
+### MyView
+
+```java
+public class MyView {
+	private String viewPath;
+	
+	public MyView(String viewPath) {
+		this.viewPath = viewPath;
+	}
+	
+	public void render(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		RequestDispatcher dispatcher = req.getRequestDispatcher(viewPath);
+		dispatcher.forward(req, res);
+	}
+}
+```
+
+- 계속 반복되는 부분을 render 함수로 생성.
+- RequestDispatcher 생성 및 foward 호출 부분
+
+### ControllerV2
+```java
+public interface ControllerV2 {
+	MyView process(HttpServletRequest req, HttpServletResponse res) throws ServletException,IOException;
+}
+```
+- 반환형을 위에서 생성한 MyView로 변경
+
+이제 컨트롤러를 앞선 버전1과 마찬가지로 세개 생성할 것이다.
+
+기본 로직인 전과 동일하지만 중복된 부분을 제거하였다.
+
+### MemberFormController
+```java
+public class MemberFormControllerV2 implements ControllerV2{
+	@Override
+	public MyView process(HttpServletRequest req, HttpServletResponse res) throws ServletException,IOException {
+		return new MyView("/WEB-INF/views/new-form.jsp");
+	}
+}
+```
+- MyView를 return
+- MyView(String): MyView의 생성자. MyView라는 객체의 viewPath 변수에 String 값 저장
+
+### MemberSaveController
+
+```java
+public class MemberSaveControllerV2 implements ControllerV2{
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	public MyView process(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		String username = req.getParameter("username");
+		int age = Integer.parseInt(req.getParameter("age"));
+		
+		Member member = new Member(username, age);
+		memberRepository.save(member);
+		req.setAttribute("member", member);
+		
+		return new MyView("/WEB-INF/views/save-result.jsp");
+	}
+}
+```
+
+### MemberListcontroller
+```java
+public class MemberListControllerV2 implements ControllerV2{
+	MemberRepository memberRepository = MemberRepository.getInstance();
+	
+	@Override
+	public MyView process(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		List<Member> members = memberRepository.findAll();
+		req.setAttribute("members", members);
+		return new MyView("/WEB-INF/views/members.jsp");
+	}
+}
+```
+
+### FrontControllerV2
+```java
+@WebServlet(name = "frontControllerServletV2", urlPatterns = "/front-controller/v2/*")
+public class FrontControllerServletV2 extends HttpServlet {
+	
+	private Map<String, ControllerV2> controllerMap = new HashMap<>();
+	
+	public FrontControllerServletV2() {
+		controllerMap.put("/front-controller/v2/members/new-form", new MemberFormControllerV2());
+		controllerMap.put("/front-controller/v2/members/save", new MemberSaveControllerV2());
+		controllerMap.put("/front-controller/v2/members", new MemberListControllerV2());
+	}
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		System.out.println("FrontControllerServletV2.service");
+		
+		String reqURI = req.getRequestURI();
+		ControllerV2 controller = controllerMap.get(reqURI);
+		
+		if(controller == null) {
+			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
+		MyView view = controller.process(req, res);
+		view.render(req,res);
+	}
+}
+```
+- V1과 유사한 방식의 로직.
+- Controller.process의 return이 void가 아니라 Myview로 변경.
+- controller.process()의 결과를 MyView view에 저장하고, view.render()를 실행한다.
+
+![alt text](/assets/view1.png)
+
+기본적인 틀은 v1때와 동일.
+
+Client들은 Front Controller를 통해 req 값에 따라 적절한 Controller를 실행한다.
+
+![alt text](/assets/view2.png)
+
+1. Client는 Front Controller를 통해 MemberSaveControllerV2에 접근한다.
+2. MemberSaveControllerV2는 MyView에 viewPath라는 데이터를 전달하고 이를 반환한다.
+3. Front Controller에서는 MemberSaveControllerV2가 반환한 MyView 데이터를 갖고 render() 함수를 실행시킨다.
+ 
+
+그림상 구조가 다소 복잡해보이지만 코드가 훨씬 간결하고 직관적이게 됐다.
+
+중복되는 코드가 거의 사라졌다.
+
+## V3 Model 추가
