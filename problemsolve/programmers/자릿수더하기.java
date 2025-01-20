@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 자릿수더하기 {
     public int 자릿수더하기(int n) {
         int answer = 0;
 

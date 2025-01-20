@@ -1,7 +1,7 @@
 package problemsolve.programmers;
 
 
-class Solution {
+class 문자반복출력하기 {
     public String solution(String my_string, int n) {
         String answer = "";
         
