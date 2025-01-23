@@ -2,12 +2,12 @@
 
 ## Java
 ---
-- [이펙티브자바]()
+- [이펙티브자바](https://github.com/gwoprk98/TIL/blob/master/java/Effective-java.md)
 
 ## Spring
 ---
 - [mvc]()
-- [jap]()
+- [jpa]()
 
 ## 운영체제
 ---
