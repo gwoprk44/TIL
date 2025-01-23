@@ -1,7 +1,7 @@
 package problemsolve.programmers;
 
 
-class Solution {
+class 인덱스바꾸기 {
     public String solution(String my_string, int num1, int num2) {
         String[] string = my_string.split("");
 
