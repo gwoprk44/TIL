@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 피자나눠먹기3 {
     public int solution(int n) {
         int answer = 0;
 
