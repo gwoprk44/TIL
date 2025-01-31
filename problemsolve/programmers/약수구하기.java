@@ -2,7 +2,7 @@ package problemsolve.programmers;
 
 import java.util.ArrayList;
 
-class Solution {
+class 약수구하기 {
     public int[] solution(int n) {
         
         ArrayList<Integer> divisor = new ArrayList<>();
