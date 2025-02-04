@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 중복된문자제거 {
     public String solution(String my_string) {
         String answer = "";
 
