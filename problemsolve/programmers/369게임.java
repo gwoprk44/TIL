@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 삼육구게임 {
     public int solution(int order) {
         int answer = 0;
         String order_s=Integer.toString(order);
