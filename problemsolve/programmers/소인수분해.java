@@ -2,7 +2,7 @@ package problemsolve.programmers;
 
 import java.util.ArrayList;
 
-class Solution {
+class 소인수분해 {
     public int[] solution(int n) {
 
         ArrayList<Integer> arr = new ArrayList<>();
