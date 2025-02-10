@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 구슬을나누는경우의수 {
     public int solution(int balls, int share) {
         return factorial(balls, share);
     }

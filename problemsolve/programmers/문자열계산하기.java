@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 문자열계산하기 {
     public int solution(String my_string) {
         int answer = 0;
         String[] str = my_string.split(" ");
