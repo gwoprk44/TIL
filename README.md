@@ -4,7 +4,7 @@
 - [이펙티브자바](https://github.com/gwoprk98/TIL/blob/master/java/Effective-java.md)
 
 ## Spring
-- [mvc]()
+- [mvc](https://github.com/gwoprk98/TIL/tree/master/spring/mvc)
     - [요청매핑](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%9A%94%EC%B2%AD%EB%A7%A4%ED%95%91.md)
     - [기본, 헤더조회](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EA%B8%B0%EB%B3%B8%2C%ED%97%A4%EB%8D%94%EC%A1%B0%ED%9A%8C.md)
     - [HTTP 요청 파라미터](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/HTTP%EC%9A%94%EC%B2%AD%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.md)
@@ -16,10 +16,10 @@
     - [컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
 - [jpa]()
 - [thymeleaf]()
-- [servlet]()
-    - [HttpServletRequest]()
-    - [요청데이터]()
-    - [HttpServletResponse]()
+- [servlet](https://github.com/gwoprk98/TIL/tree/master/spring/servlet)
+    - [HttpServletRequest](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/HttpServletRequest.md)
+    - [요청데이터](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/%EC%9A%94%EC%B2%AD%20%EB%8D%B0%EC%9D%B4%ED%84%B0.md)
+    - [HttpServletResponse](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/HttpServletResponse.md)
 
 ## 운영체제
 - [프로세스](https://github.com/gwoprk98/TIL/blob/master/OS/Chapter3%20Process%20Concept.md)
