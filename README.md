@@ -16,6 +16,10 @@
     - [컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
 - [jpa]()
 - [thymeleaf]()
+- [servlet]()
+    - [HttpServletRequest]()
+    - [요청데이터]()
+    - [HttpServletResponse]()
 
 ## 운영체제
 - [프로세스](https://github.com/gwoprk98/TIL/blob/master/OS/Chapter3%20Process%20Concept.md)
