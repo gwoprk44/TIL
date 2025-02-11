@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 캐릭터의좌표 {
     public int[] solution(String[] keyinput, int[] board) {
         int[] now = {0, 0};                             
         int maxWidth=board[0]/2;                        
