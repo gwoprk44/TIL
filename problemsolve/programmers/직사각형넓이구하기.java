@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 직사각형넓이구하기 {
     public int solution(int[][] dots) {
         int xMin = Integer.MAX_VALUE, xMax = Integer.MIN_VALUE;
         int yMin = Integer.MAX_VALUE, yMax = Integer.MIN_VALUE;

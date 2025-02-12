@@ -1,6 +1,6 @@
 package problemsolve.programmers;
 
-class Solution {
+class 외계어사전 {
     public int solution(String[] spell, String[] dic) {
         
         for(int i = 0;i < dic.length; i++){
