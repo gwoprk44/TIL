@@ -21,7 +21,6 @@
     - [단순하고 실용적인 컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EB%8B%A8%EC%88%9C%ED%95%98%EA%B3%A0%20%EC%8B%A4%EC%9A%A9%EC%A0%81%EC%9D%B8%20%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
     - [유연한 컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%9C%A0%EC%97%B0%ED%95%9C%20%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
 - [jpa]()
-- [thymeleaf]()
 - [servlet](https://github.com/gwoprk98/TIL/tree/master/spring/servlet)
     - [HttpServletRequest](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/HttpServletRequest.md)
     - [요청데이터](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/%EC%9A%94%EC%B2%AD%20%EB%8D%B0%EC%9D%B4%ED%84%B0.md)
