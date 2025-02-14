@@ -12,7 +12,7 @@
     - [스프링 기초](https://github.com/gwoprk98/TIL/blob/master/spring/spring/%EC%8A%A4%ED%94%84%EB%A7%81%20%EA%B8%B0%EC%B4%88.md)
     - [IoC, DI, 컨테이너](https://github.com/gwoprk98/TIL/blob/master/spring/spring/IoC%2C%20DI%2C%20%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88.md)
     - [싱글톤](https://github.com/gwoprk98/TIL/blob/master/spring/spring/%EC%8B%B1%EA%B8%80%ED%86%A4.md)
-    - [@Configuration과 싱글톤]()
+    - [@Configuration과 싱글톤](https://github.com/gwoprk98/TIL/blob/master/spring/spring/%40Configuration%EA%B3%BC%20%EC%8B%B1%EA%B8%80%ED%86%A4.md)
 - [mvc](https://github.com/gwoprk98/TIL/tree/master/spring/mvc)
     - [요청매핑](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%9A%94%EC%B2%AD%EB%A7%A4%ED%95%91.md)
     - [기본, 헤더조회](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EA%B8%B0%EB%B3%B8%2C%ED%97%A4%EB%8D%94%EC%A1%B0%ED%9A%8C.md)
