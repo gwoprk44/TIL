@@ -4,8 +4,8 @@
 - [이펙티브자바](https://github.com/gwoprk98/TIL/blob/master/java/Effective-java.md)
 
 ## ProblemSolve
-- [자료구조]()
-    - [배열]()
+- [자료구조](https://github.com/gwoprk98/TIL/tree/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0)
+    - [배열](https://github.com/gwoprk98/TIL/blob/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/%EB%B0%B0%EC%97%B4.md)
 
 ## Spring
 - [spring](https://github.com/gwoprk98/TIL/tree/master/spring/spring)
