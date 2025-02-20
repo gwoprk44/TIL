@@ -3,7 +3,7 @@ using namespace std;
 
 int freq[26];
 int main(void) {
-	ios::sync_with_stdio;
+	ios::sync_with_stdio(0);
 	cin.tie(0);
 
 	string s;
