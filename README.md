@@ -15,8 +15,8 @@
 - [자료구조](https://github.com/gwoprk98/TIL/tree/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0)
     - [배열](https://github.com/gwoprk98/TIL/blob/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/%EB%B0%B0%EC%97%B4.md)
     - [연결리스트](https://github.com/gwoprk98/TIL/blob/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/%EC%97%B0%EA%B2%B0%20%EB%A6%AC%EC%8A%A4%ED%8A%B8.md)
-    - [스택]()
-    - [큐]()
+    - [스택](https://github.com/gwoprk98/TIL/blob/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/%EC%8A%A4%ED%83%9D.md)
+    - [큐](https://github.com/gwoprk98/TIL/blob/master/problemsolve/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/%ED%81%90.md)
 
 ## Spring
 - [spring](https://github.com/gwoprk98/TIL/tree/master/spring/spring)
@@ -45,8 +45,8 @@
     - [Model 추가](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/Model%20%EC%B6%94%EA%B0%80.md)
     - [단순하고 실용적인 컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EB%8B%A8%EC%88%9C%ED%95%98%EA%B3%A0%20%EC%8B%A4%EC%9A%A9%EC%A0%81%EC%9D%B8%20%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
     - [유연한 컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%9C%A0%EC%97%B0%ED%95%9C%20%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
-- [jpa]()
-    - [도메인 분석 설계]()
+- [jpa](https://github.com/gwoprk98/TIL/tree/master/spring/jpa)
+    - [도메인 분석 설계](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/%EB%8F%84%EB%A9%94%EC%9D%B8%EB%B6%84%EC%84%9D%EC%84%A4%EA%B3%84.md)
 - [servlet](https://github.com/gwoprk98/TIL/tree/master/spring/servlet)
     - [HttpServletRequest](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/HttpServletRequest.md)
     - [요청데이터](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/%EC%9A%94%EC%B2%AD%20%EB%8D%B0%EC%9D%B4%ED%84%B0.md)
