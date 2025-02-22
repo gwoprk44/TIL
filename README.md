@@ -69,3 +69,6 @@
 - [HTTP 아키텍쳐](https://github.com/gwoprk98/TIL/blob/master/Network/HTTP%20%EC%95%84%ED%82%A4%ED%85%8D%EC%B3%90.md)
 - [HTTP 웹 기본지식](https://github.com/gwoprk98/TIL/blob/master/Network/HTTP%EC%9B%B9%20%EA%B8%B0%EB%B3%B8%EC%A7%80%EC%8B%9D.md)
 - [컴퓨터 네트워크 하향식 접근](https://github.com/gwoprk98/TIL/blob/master/Network/%EC%BB%B4%ED%93%A8%ED%84%B0%20%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC%20%ED%95%98%ED%96%A5%EC%8B%9D%20%EC%A0%91%EA%B7%BC.md)
+
+## OOP
+- [DDD](https://github.com/gwoprk98/TIL/blob/master/OOP/DDD.md)
