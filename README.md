@@ -50,6 +50,7 @@
     - [유연한 컨트롤러](https://github.com/gwoprk98/TIL/blob/master/spring/mvc/%EC%9C%A0%EC%97%B0%ED%95%9C%20%EC%BB%A8%ED%8A%B8%EB%A1%A4%EB%9F%AC.md)
 - [jpa](https://github.com/gwoprk98/TIL/tree/master/spring/jpa)
     - [도메인 분석 설계](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/%EB%8F%84%EB%A9%94%EC%9D%B8%EB%B6%84%EC%84%9D%EC%84%A4%EA%B3%84.md)
+    - [변경 감지와 병합](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/%EB%B3%80%EA%B2%BD%EA%B0%90%EC%A7%80%EC%99%80%EB%B3%91%ED%95%A9.md)
 - [servlet](https://github.com/gwoprk98/TIL/tree/master/spring/servlet)
     - [HttpServletRequest](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/HttpServletRequest.md)
     - [요청데이터](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/%EC%9A%94%EC%B2%AD%20%EB%8D%B0%EC%9D%B4%ED%84%B0.md)
