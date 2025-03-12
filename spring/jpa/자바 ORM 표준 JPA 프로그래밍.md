@@ -20,6 +20,12 @@
     - [단방향 연관 관계](#단방향-연관-관계)
     - [양방향 연관 관계](#양방향-연관-관계)
     - [실전 예제-2](#실전-예제-2)
+- [다양한 연관 관계 매핑](#다양한-연관-관계-매핑)
+    - [다대일](#다대일)
+    - [일대다](#일대다)
+    - [일대일](#일대일)
+    - [다대다](#다대다)
+    - [실전 예제-3](#실전-예제-3)
 
 # JPA 시작하기
 
@@ -844,5 +850,299 @@ public class Order {
 ```
 
 단방향을 그대로 유지하여도 상관이 없다. 즉, Order에 orderItem 참조를 굳이 추가하지 않아도 된다. 예제에서는 연습을 위해 사용하였다.
+
+---
+
+# 다양한 연관 관계 매핑
+
+연관관계 매핑시 고려할 사항은 다음과 같다.
+- 다중성
+- 단방향, 양방향
+- 연관 관계의 주인
+
+## 다대일
+- N쪽이 연관 관계의 주인이다.
+
+### 단방향
+![](/assets/다대일단방향.png)
+
+- 회원이 N, 팀이1
+    - N쪽이 외래키를 가진다.
+- 외래키가 존재하는 곳에 참조를 걸고 연관 관계 매핑을 진행한다.
+
+### 양방향
+
+![](/assets/다대일양방향.png)
+
+- 양방향 자체가 테이블에 영향을 미치지는 않는다.
+- 연관관계의 주인이 외래 키를 관리하기 때문에 객체에 양방향 관계를 추가하면 된다.
+
+## 일대다
+- 1이 연관 관계의 주인이다. 실무에서 추천하지 않는 방법이다.
+
+### 단방향
+
+![](/assets/일대다단방향.png)
+- team을 중심으로 member를 관리한다.
+- db입장에서는 무조건 N쪽에 외래키가 들어간다.
+    - 1에 해당하는 team에 member_id가 pk로 존재하면 team을 계속 인서트해야해서 중복이 발생한다.
+- 일대다는 객체에선 team이 중심이여도 db입장에서 n쪽에 외래키가 존재하므로 member 테이블을 건드려야 한다.
+    - Team.members를 수정하면 team 테이블 대신 member 테이블에 존재하는 외래키 team_id를 업데이트한다.
+
+### 정리
+- 객체와 테이블의 차이 때문에 반대편 테이블의 외래키를 관리하는 특이한 구조가 된다.
+- @JoinColumn을 꼭 사용해야 한다.
+    - 사용하지 않는다면 조인 테이블 방식이 적용된다.
+    - 이로 인해서 추가 테이블이 생성되어 운영이 힘들어 진다.
+- 실무에서는 되도록 일대다 단방향 매핑이 필요하다면 다대일 양방향 매핑을 사용하는것이 좋다.
+
+### 양방향
+
+- 읽기 전용 필드를 사용하여 양방향 처럼 사용이 가능하나 그냥 다대일 양방향을 사용하는 것이 좋다.
+
+## 일대일
+- 일대일 관계는 그 반대도 일대일이다.
+    - 외래키를 어디든 넣을 수 있다.
+    - 주 테이블이든 대상 테이블이든 둘 중 하나에만 넣으면 된다.
+- 외래키에 유니크 제약 조건이 추가되어야 한다.
+
+### 주 테이블 외래키 단방향
+![](/assets/주테이블단방향.png)
+- 회원은 라커 하나만 가질 수 있다.
+- 멤버가 pk로 locker_id를 가지고 유니크 제약조건을 걸거나, 라커가 pk로 member_id로 유니크 제약조건을 걸어도 된다.
+
+#### Member
+```java
+@Entity
+public class Member {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String username;
+
+    @OneToOne
+    // member에 PK를 둔다.
+    @JoinColumn(name = "LOCKER_ID")
+    private Locker locker;
+}
+```
+
+#### Locker
+```java
+@Entity
+public class Locker {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+}
+```
+
+### 주 테이블 외래키 양방향
+
+![](/assets/주테이블양방향.png)
+- 다대일 양방향 매핑처럼 외래키가 있는 곳이 연관 관계의 주인이 된다.
+
+#### Member
+```java
+@Entity
+public class Member {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String username;
+
+    @OneToOne
+    @JoinColumn(name = "LOCKER_ID")
+    private Locker locker;
+}
+```
+
+#### Locker
+```java
+@Entity
+public class Locker {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    // 일대일에도 연관 관계 주인은 똑같은 원리로 적용된다.
+    @OneToOne(mappedBy = "locker")
+    private Member member;
+}
+```
+
+- 연관 관계의 주인은 외래키가 있는 곳이 되고 반대편은 `mappedBy`를 적용한다.
+
+
+### 대상 테이블 외래키 단방향
+
+![](/assets/대상테이블단방향.png)
+- 대상 테이블에 외래키가 있는 단방향
+    - Member가 연관관계의 주인이 되고 싶은데 테이블에서는 Locker에 fk가 존재하는 상태이다.
+- 이러한 형태는 jpa에서 지원하지 않는다.
+
+### 대상 테이블 외래키 양방향
+
+![](/assets/대상테이블양방향.png)
+- 양방향은 jpa에서 지원한다.
+- Locker.member를 연관 관계의 주인으로 정해 매핑한다.
+- 일대일은 내가 내것만 관리하는 방식이다.
+    - 내 엔티티에 있는 외래키는 내가 직접 관리하는 방식.
+
+일대일 관계에서 외래키를 어디에 두는 것이 좋을지 생각해보자. 
+
+만약 미래에 회원 한명이 여러 라커를 가질 수 있게 바뀐다면, locker에 외래키를 두는 양방향이 좋을 것이다. locker에 있는 유니크 제약 조건만 제거하면 되기 때문이다.
+
+각각의 프로젝트마다 연관 관계의 주인을 정하는데 딜레마가 존재하겠지만 보통 비즈니스에서는 회원 조회가 많이 발생하기 때문에 member에 fk를 두는것이 더 유리하다. 라커정보를 가져올 때도 조인할 필요없이 쿼리 한방으로 라커 정보를 알아내는 등의 성능 상의 이점이 존재하기 때문이다.
+
+### 정리
+
+#### 주 테이블에 외래키를 두는 방법
+- Member가 FK를 가진다.
+- 주 객체가 대상 객체의 참조를 가지는 것처럼 주 테이블에 외래키를 두고 대상 테이블을 찾는다.
+- 객체 지향 개발자가 선호.
+- JPA 매핑이 편리
+- 주 테이블만 조호히해도 대상 테이블 데이터를 확인 가능하다.
+- 값이 없다면 외래키에 NULL값을 허용한다.
+
+#### 대상 테이블에 외래키를 두는 방법
+- Locker가 FK를 가진다.
+- 대상 테이블에 외래키가 존재한다.
+- 전통적인 DB 개발자가 선호한다.
+- 주 테이블과 대상 테이블의 관계를 일대일에서 일대다로 변경할때에도 테이블 구조 유지가 가능하다.
+- 프록시 기능의 한계로 항상 즉시 로딩된다.
+
+## 다대다
+- @ManyToMany
+    - 실무에서 사용하지 않도록 하자.
+    - 관계형 db는 정규화된 테이블 2개라 다대다 관계를 표현할 수 없기 때문이다.
+- 연결 테이블을 추가하여 일대다, 다대일 관계로 풀어내야 한다.
+- 실무에서는 연결 테이블이 단순 연결 기능만 하지 않는다.
+    - 추가적인 데이터가 필요해도 테이블에 데이터 추가가 불가능하다.
+    - 예상하지 못한 쿼리를 날릴 수 있다.
+- 그냥 사용하지 않도록 하자.
+
+## 실전 예제-3
+
+### Entity
+![](/assets/예제3엔티티.png)
+- order과 delivery는 1:1, product와 category는 N:M이다.
+
+### ERD
+
+![](/assets/erd.png)
+- member, order, delivery 관계에서는 fk를 주 테이블인 orders에 넣는다. category와 item은 다대다 관계로 중간 테이블을 둔다.
+
+### 연관 관계 구현
+
+#### Delivery
+```java
+@Entity
+public class Delivery {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String city;
+    private String street;
+    private String zipcode;
+
+    private DeliveryStatus status;
+
+    @OneToOne(mappedBy = "delivery")
+    private Order order;
+}
+```
+
+#### Category
+```java
+@Entity
+public class Category {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    // 자기 자신을 매핑하는 것도 가능하다.
+    @ManyToOne
+    // 상위 카테고리가 연관 관계의 주인
+    @JoinColumn(name = "PARENT_ID")
+    private Category parent;
+
+    // 각각의 상위 카테고리에 매핑 된 하위 카테고리
+    @OneToMany(mappedBy = "parent")
+    private List<Category> child = new ArrayList<>();
+
+    @ManyToMany
+    // 중간 테이블을 만들어준다.
+    @JoinTable(
+            // 중간 테이블 이름
+            name = "CATEGORY_ITEM",
+            // 한 쪽이 join 하는 것
+            joinColumns = @JoinColumn(name = "CATEGORY_ID"),
+            // 반대쪽이 join 하는 것
+            inverseJoinColumns = @JoinColumn(name = "ITEM_ID")
+    )
+    private List<Item> items = new ArrayList<>();
+}
+```
+
+#### Item
+```java
+@Entity
+public class Item {
+
+    @Id
+    @GeneratedValue
+    @Column(name = "item_id")
+    private Long id;
+
+    private String name;
+    private int price;
+    private int stockQuantity;
+
+    // Category.items가 연관 관계의 주인이다.
+    @ManyToMany(mappedBy = "items")
+    private List<Category> categories = new ArrayList<>();
+}
+```
+
+#### Order
+```java
+@Entity
+@Table(name = "ORDERS")
+public class Order {
+
+    @Id
+    @GeneratedValue
+    @Column(name = "order_id")
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "DELIVERY_ID")
+    private Delivery delivery;
+}
+```
+
+### @JoinColumn
+
+![](/assets/joincol.png)
+- 외래 키 매핑시 사용한다.
+- 외래 키가 참조하는 대상 테이블의 칼럼명이 다를 때는 referencedColumnName을 사용해 지정해준다.
+
+### @ManyToOne
+![](/assets/manytoone.png)
+
+### @OneToMany
+![](/assets/onetomany.png)
 
 ---
