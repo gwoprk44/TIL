@@ -26,6 +26,11 @@
     - [일대일](#일대일)
     - [다대다](#다대다)
     - [실전 예제-3](#실전-예제-3)
+- [고급 매핑](#고급-매핑)
+    - [상속 관계 매핑](#상속-관계-매핑)
+    - [매핑 정보 상속](#매핑-정보-상속)
+    - [실전 예제-4](#실전-예제-4)
+
 
 # JPA 시작하기
 
@@ -174,7 +179,7 @@ public class JpaMain {
     - 하지만 쿼리를 쓰면 SQL에 종속된다.
 - 이때 객체를 대상으로 검색할 수 있게 하는 기술이 JPQL이다.
 
----
+
 
 
 # 영속성 관리
@@ -320,7 +325,7 @@ public class JpaMain {
 - em.close()
     - 영속성 컨텍스트를 종료한다.
 
----
+
 
 # Entity 매핑
 
@@ -519,7 +524,7 @@ public class Member {
 
 이러한 문제점을 연관관계 매핑을 통해 해결이 가능하다.
 
----
+
 
 # 연관 관계 매핑
 
@@ -851,7 +856,7 @@ public class Order {
 
 단방향을 그대로 유지하여도 상관이 없다. 즉, Order에 orderItem 참조를 굳이 추가하지 않아도 된다. 예제에서는 연습을 위해 사용하였다.
 
----
+
 
 # 다양한 연관 관계 매핑
 
@@ -1145,4 +1150,231 @@ public class Order {
 ### @OneToMany
 ![](/assets/onetomany.png)
 
----
+
+
+# 고급 매핑
+
+## 상속 관계 매핑 정의
+- 상속 관계 매핑이란 객체의 상속 구조와 db의 슈퍼 타입, 서브 타입의 관계를 매핑하는 것을 의미한다.
+
+![](/assets/상속관계매핑.png)
+
+- db
+    - 논리 모델과 물리 모델이 존재
+    - 논리 모델로 음반, 영화, 책을 구상
+    - 가격이나 이름 등 공통적인 속성은 물품에 두고 각각에 맞는 데이터는 아래에 둔다.
+- 객체
+    - 명확하게 상속 관계가 존재한다.
+    - 아이템이라는 추상 타입을 만들고 그 아래 상속 관계를 둔다.
+
+## 주요 애너테이션
+
+### @Inheritance
+
+- JOINED
+    - 조인 전략
+- SINGLE_TABLE
+    - 단일 테이블 전략
+    - 별도의 설정이 없다면 JPA 기본 전략으로 들어간다.
+- TABLE_PER_CLASS
+    - 구현 클래스마다 테이블 전략(사용하지 않는것이 좋다.)
+
+추후 요구 사항이 바뀌어도 @Inheritance의 옵션만 바꿔주면 되기 때문에 편리하다.
+
+### @DiscriminatorColumn
+```java
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+// DTYPE이 생기면서 album, movie 등의 테이블 이름이 들어간다.
+// item 데이터가 생겼을 때 이 데이터가 어디서 온 건지 알 수 있게 된다.
+@DiscriminatorColumn
+public class Item {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+    private int price;
+}
+```
+- DTYPE가 추가된다.
+- 코드의 유지보수성이 높아지므로 사용하도록 하자.
+- 단일 테이블 전략에서는 애노테이션을 사용하지 않더라도 자동으로 생성된다.
+
+### @DiscriminatorValue
+
+```java
+@Entity
+@DiscriminatorValue("A")
+public class Album extends Item {
+
+    private String artist;
+}
+```
+- DTYPE에 들어갈 자식의 값을 정해줄수 있다.
+
+## 상속 관계 매핑
+
+### 조인 전략
+
+![](/assets/조인.png)
+
+- item, album, movie, book 테이블을 각자 만든 다음 조인으로 구성하는 방법
+- insert가 두 번 일어난다.
+    - 공통 데이터는 item에 들어간다.
+    - 각각의 정보는 album, movie, book에 들어간다.
+- 조회할 때는 PK로 조인한다.
+- item만 보면 그게 movie인지 album인지 모르기 때문에 구분하는 DTYPE 칼럼을 둔다.
+
+#### 장점
+- 테이블이 정규화되어있다.
+- 외래키 참조 무결성 제약 조건을 활용 가능하다.
+    - 주문 테이블에서 외래 키 참조로 아이템을 보고싶다면 외래키인 `item_id`를 활용하면 된다.
+
+#### 단점
+- join 사용때문에 성능이 저하된다.
+- 데이터 저장시 insert 쿼리를 두번씩 날린다.
+- 기본적으로 join 전략이 정석이라고 생각하자.
+    - 객체지향과 맞고 설계가 깔끔하기 때문이다.
+
+### 단일 테이블 전략
+
+![](/assets/단일테이블.png)
+
+- 논리 테이블을 하나로 합치는 방법이다.
+- 모든 칼럼을 모아서 `DTYPE`로 구분한다.
+- 모든 필드가 `item`테이블에 합쳐지고 자식 테이블은 생성x.
+- 해당 자식 엔티티와 관련없는 데이터는 db에 null값으로 저장된다.
+
+#### 장점
+- 조인이 없기때문에 성능이 빠르다.
+- 조회 쿼리가 단순하다.
+
+#### 단점
+- 자식 엔티티가 매핑한 칼럼은 모두 null 값을 허용해야 한다.
+    - 데이터 무결성 측면에서 애매하다.
+- 단일 테이블에 모든것을 저장하므로 테이블이 커진다.
+    - 상황에 따라 성능이 더 안좋을 수도 있다.
+
+### 구현 클래스 마다 단일 테이블 전략
+
+![](/assets/구현클래스마다.png)
+
+- `item`테이블을 없 애고 각각의 테이블을 만들어 중복 속성을 허용하는 방법이다.
+- 사용하지 말자.
+
+#### 장점
+- 서브타입을 명확하게 구분해서 처리할 때 효과적이다.
+- not null 제약 조건 사용이 가능하다.
+
+#### 단점
+- 사용하지 않도록하자.
+- 부모 클래스로 조회할 경우 union으로 모든 테이블에 데이터가 있는지 다 뒤져봐야 한다.
+- 자식 테이블을 통합해서 쿼리하기 어렵다.
+    - 수정 사항이 발생할때마다 각 테이블을 모두 수정해야 한다.
+    - 즉, 유지보수성이 떨어진다.
+
+### 정리
+- 객체는 상속이 되기 때문에 어떠한 전략을 사용해도 결과는 똑같다.
+- 기본적으로 조인 전략을 사용하고, 테이블이 정말 단순하고 확장 가능성이 없다면 단일 테이블 전략을 사용하자.
+    - 그중에서도 비즈니스적으로 중요하고 복잡한 로직은 조인 전략을 사용하자.
+
+## 매핑 정보 상속
+
+![](/assets/매핑정보상속.png)
+
+- 공통으로 사용되는 매핑 정보를 상속하여 사용 가능하다.
+
+생성, 수정 정보를 모든 클래스에 추가해야한다고 가정할 때
+
+```java
+// 매핑 정보만 받는 부모 클래스를 명시할 때 사용한다.
+@MappedSuperclass
+public abstract class BaseEntity {
+    private String createdBy;
+    private LocalDateTime createdDate;
+    private String lastModifiedBy;
+    private LocalDateTime lastModifiedDate;
+}
+```
+
+위와 같이 공통된 속성을 클래스로 만들어 다른 클래스가 상속 받으면 된다.
+그렇게 하면 테이블 생성시에도 자동으로 컬럼이 생성되는것을 알 수있다.
+
+![](/assets/상속결과.png)
+
+```java
+@MappedSuperclass
+public abstract class BaseEntity {
+    @Column(name = "INSERT_MEMBER")
+    private String createdBy;
+    private LocalDateTime createdDate;
+    @Column(name = "UPDATE_MEMBER")
+    private String lastModifiedBy;
+    private LocalDateTime lastModifiedDate;
+}
+```
+칼럼 이름을 별도로 지정해주는것도 가능하다.
+
+### 특징
+- 등록일, 수정일 등 전체 엔티티에서 공통으로 사용하는 정보를 모을 때 사용한다.
+- 상속관계를 매핑하는 것이 아니다.
+    - 테이블과는 관련이 없다.
+    - `@MappedSuperclass`가 달린 클래스는 엔티티가 아니며 테이블과 매핑되지 않는다.
+    - 부모클래스는 자식 클래스에게 매핑 정보만 제공한다.
+    - 따라서 `em.find()`와 같은 조회나 검색이 불가능ㅎ다ㅏ.
+- 추상클래스로 생성하자.
+
+## 실전 예제-4
+
+![](/assets/실전예제4.png)
+- 상품과 도서,음반,영화를 상속관계로 생성한다.
+
+![](/assets/실전예제4-1.png)
+- db는 단일 테이블 전략을 사용한다.
+
+#### Item
+```java
+@Entity
+// 단일 테이블 전략을 사용한다.
+@Inheritance(strategy = SINGLE_TABLE)
+// DTYPE으로 데이터를 구분한다.
+@DiscriminatorColumn
+// 아이템만 단독으로 테이블에 저장할 일이 없다고 가정하고 추상 클래스로 선언한다.
+public abstract class Item extends BaseEntity {
+
+    @Id
+    @GeneratedValue
+    @Column(name = "item_id")
+    private Long id;
+
+    private String name;
+    private int price;
+    private int stockQuantity;
+
+    @ManyToMany(mappedBy = "items")
+    private List<Category> categories = new ArrayList<>();
+}
+```
+
+```java
+@Entity
+public class Album extends Item {
+
+    private String artist;
+    private String etc;
+}
+```
+
+```java
+@MappedSuperclass
+public abstract class BaseEntity {
+
+    private String createdBy;
+    private LocalDateTime createdDate;
+    private String lastModifiedBy;
+    private LocalDateTime lastModifiedDate;
+}
+```
+
