@@ -1,35 +1,137 @@
 # JPA 자바 ORM 표준 프로그래밍
 
 ## 목차
+- [JPA 자바 ORM 표준 프로그래밍](#jpa-자바-orm-표준-프로그래밍)
+  - [목차](#목차)
 - [JPA 시작하기](#jpa-시작하기)
-    - [Dialect](#dialect-방언)
-    - [애플리케이션 개발](#애플리케이션-개발)
-    - [주의할 점](#주의-할-점)
-    - [JPQL](#jpql)
+  - [Dialect; 방언](#dialect-방언)
+  - [애플리케이션 개발](#애플리케이션-개발)
+      - [JPA 구동방식](#jpa-구동방식)
+    - [회원 생성](#회원-생성)
+    - [회원 수정](#회원-수정)
+  - [주의 할 점](#주의-할-점)
+  - [JPQL](#jpql)
 - [영속성 관리](#영속성-관리)
-    - [영속성 컨텍스트](#영속성-컨텍스트)
-    - [플러시](#플러시)
-    - [준영속 상태](준영속-상태)
+  - [영속성 컨텍스트](#영속성-컨텍스트)
+    - [엔티티 생명주기](#엔티티-생명주기)
+    - [영속성 컨텍스트의 이점](#영속성-컨텍스트의-이점)
+      - [1차 캐시](#1차-캐시)
+      - [동일성 보장](#동일성-보장)
+      - [트랜잭션을 지원하는 쓰기 지연](#트랜잭션을-지원하는-쓰기-지연)
+      - [변경 감지(더티 체킹)](#변경-감지더티-체킹)
+  - [플러시](#플러시)
+    - [영속성 컨텍스트를 플러시 하는 방법](#영속성-컨텍스트를-플러시-하는-방법)
+  - [준영속 상태](#준영속-상태)
+    - [준영속 상태로 만드는 법](#준영속-상태로-만드는-법)
 - [Entity 매핑](#entity-매핑)
-    - [객체와 테이블 매핑](#객체와-테이블-매핑)
-    - [데이터베이스 스키마 자동 생성](#데이터베이스-스키마-자동-생성)
-    - [필드와 칼럼 매핑](#필드와-컬럼-매핑)
-    - [기본 키 매핑](#기본-키-매핑)
-    - [실전 예제-1](#실전-예제-1)
+  - [객체와 테이블 매핑](#객체와-테이블-매핑)
+    - [@Entity](#entity)
+      - [name 속성](#name-속성)
+    - [@Table](#table)
+      - [name 속성](#name-속성-1)
+      - [catalog 속성](#catalog-속성)
+      - [schema 속성](#schema-속성)
+  - [데이터베이스 스키마 자동 생성](#데이터베이스-스키마-자동-생성)
+    - [주의사항](#주의사항)
+  - [DDL 생성 기능](#ddl-생성-기능)
+    - [제약 조건 추가](#제약-조건-추가)
+    - [유니크 제약 조건 추가](#유니크-제약-조건-추가)
+  - [필드와 컬럼 매핑](#필드와-컬럼-매핑)
+    - [@Column](#column)
+    - [@Enumerated](#enumerated)
+    - [@Temporal](#temporal)
+    - [@Lob](#lob)
+    - [@Transient](#transient)
+  - [기본 키 매핑](#기본-키-매핑)
+    - [직접 할당](#직접-할당)
+    - [자동 생성](#자동-생성)
+      - [IDENTITY](#identity)
+      - [SEQUENCE](#sequence)
+      - [Table](#table-1)
+    - [권장하는 식별자 전략](#권장하는-식별자-전략)
+  - [실전 예제-1](#실전-예제-1)
+    - [테이블 설계](#테이블-설계)
+    - [엔티티 설계와 매핑](#엔티티-설계와-매핑)
+    - [데이터 중심 설계의 문제점](#데이터-중심-설계의-문제점)
 - [연관 관계 매핑](#연관-관계-매핑)
-    - [단방향 연관 관계](#단방향-연관-관계)
-    - [양방향 연관 관계](#양방향-연관-관계)
-    - [실전 예제-2](#실전-예제-2)
+  - [예제 시나리오](#예제-시나리오)
+  - [단방향 연관 관계](#단방향-연관-관계)
+      - [엔티티 정의](#엔티티-정의)
+      - [엔티티 저장 및 조회](#엔티티-저장-및-조회)
+    - [연관 관계 수정](#연관-관계-수정)
+  - [양방향 연관 관계](#양방향-연관-관계)
+      - [정의](#정의)
+      - [Team](#team)
+    - [연관 관계의 주인과 mappedBy](#연관-관계의-주인과-mappedby)
+    - [연관 관계의 주인](#연관-관계의-주인)
+    - [주인을 결정하는 기준](#주인을-결정하는-기준)
+    - [Tip](#tip)
+    - [정리](#정리)
+  - [실전 예제-2](#실전-예제-2)
+    - [단방향 연관관계 설정](#단방향-연관관계-설정)
+    - [양방향 연관관계 설정](#양방향-연관관계-설정)
 - [다양한 연관 관계 매핑](#다양한-연관-관계-매핑)
-    - [다대일](#다대일)
-    - [일대다](#일대다)
-    - [일대일](#일대일)
-    - [다대다](#다대다)
-    - [실전 예제-3](#실전-예제-3)
+  - [다대일](#다대일)
+    - [단방향](#단방향)
+    - [양방향](#양방향)
+  - [일대다](#일대다)
+    - [단방향](#단방향-1)
+    - [정리](#정리-1)
+    - [양방향](#양방향-1)
+  - [일대일](#일대일)
+    - [주 테이블 외래키 단방향](#주-테이블-외래키-단방향)
+      - [Member](#member)
+      - [Locker](#locker)
+    - [주 테이블 외래키 양방향](#주-테이블-외래키-양방향)
+      - [Member](#member-1)
+      - [Locker](#locker-1)
+    - [대상 테이블 외래키 단방향](#대상-테이블-외래키-단방향)
+    - [대상 테이블 외래키 양방향](#대상-테이블-외래키-양방향)
+    - [정리](#정리-2)
+      - [주 테이블에 외래키를 두는 방법](#주-테이블에-외래키를-두는-방법)
+      - [대상 테이블에 외래키를 두는 방법](#대상-테이블에-외래키를-두는-방법)
+  - [다대다](#다대다)
+  - [실전 예제-3](#실전-예제-3)
+    - [Entity](#entity-1)
+    - [ERD](#erd)
+    - [연관 관계 구현](#연관-관계-구현)
+      - [Delivery](#delivery)
+      - [Category](#category)
+      - [Item](#item)
+      - [Order](#order)
+    - [@JoinColumn](#joincolumn)
+    - [@ManyToOne](#manytoone)
+    - [@OneToMany](#onetomany)
 - [고급 매핑](#고급-매핑)
-    - [상속 관계 매핑](#상속-관계-매핑)
-    - [매핑 정보 상속](#매핑-정보-상속)
-    - [실전 예제-4](#실전-예제-4)
+  - [상속 관계 매핑 정의](#상속-관계-매핑-정의)
+  - [주요 애너테이션](#주요-애너테이션)
+    - [@Inheritance](#inheritance)
+    - [@DiscriminatorColumn](#discriminatorcolumn)
+    - [@DiscriminatorValue](#discriminatorvalue)
+  - [상속 관계 매핑](#상속-관계-매핑)
+    - [조인 전략](#조인-전략)
+      - [장점](#장점)
+      - [단점](#단점)
+    - [단일 테이블 전략](#단일-테이블-전략)
+      - [장점](#장점-1)
+      - [단점](#단점-1)
+    - [구현 클래스 마다 단일 테이블 전략](#구현-클래스-마다-단일-테이블-전략)
+      - [장점](#장점-2)
+      - [단점](#단점-2)
+    - [정리](#정리-3)
+  - [매핑 정보 상속](#매핑-정보-상속)
+    - [특징](#특징)
+  - [실전 예제-4](#실전-예제-4)
+      - [Item](#item-1)
+- [프록시와 연관 관계](#프록시와-연관-관계)
+  - [프록시](#프록시)
+    - [프록시 기초](#프록시-기초)
+    - [프록시 특징](#프록시-특징)
+    - [프록시 객체의 초기화](#프록시-객체의-초기화)
+    - [주의 사항](#주의-사항)
+    - [준영속 상태의 프록시](#준영속-상태의-프록시)
+    - [프록시 유틸리티 메서드](#프록시-유틸리티-메서드)
+
 
 
 # JPA 시작하기
@@ -1378,3 +1480,445 @@ public abstract class BaseEntity {
 }
 ```
 
+# 프록시와 연관 관계
+
+## 프록시
+
+![](/assets/프록시.png)
+
+멤버와 팀이 연관관계가 맺어져있을 때 멤버를 조회하면 팀도 매번 함께 조회해야 하는가?
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        ...
+
+        Member member = em.find(Member.class, memberId);
+        Team team = member.getTeam();
+
+        System.out.println("회원 이름: " + member.getUsername());
+        System.out.println("소속팀: " + team.getName());
+    }
+}
+```
+
+```java
+public class App {
+    public void printUser(String memberId) {
+        ...
+
+        Member member = em.find(Member.class, memberId);
+        Team team = member.getTeam();
+
+        System.out.println("회원 이름: " + member.getUsername());
+    }
+}
+```
+- 처음 코드처럼 소속 팀이 필요하면 한번에 가져오는 것이 좋다.
+- 두번째 경우처럼 회원 정보만이 필요하다면 팀을 가져오는것은 리소스를 낭비하게 된다.
+- 이를 해결하기 위해 프록시를 적용해보자.
+
+### 프록시 기초
+
+**em.find()**
+
+데이터베이스를 통해서 실제 Entity 객체를 조회한다.
+
+```java
+public class App {
+    public class App {
+        public void printUserAndTeam(String memberId) {
+            ...
+
+            Member member = em.find(Member.class, memberId);
+            // 출력 등 사용하는 로직 없음
+        }
+    }
+}
+```
+- 데이터를 사용하지 않고 `find()`만 사용해도 `select` 쿼리를 실행한다.
+
+**em.getReference()**
+- 데이터베이스 조회를 미루는 가짜(프록시) 엔티티 객체를 호출한다.
+- db에 쿼리는 안날리지만 객체가 조회된다.
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+      ...
+
+        Member member = em.getReference(Member.class, memberId);
+        // 출력 등 사용하는 로직 없음
+    }
+}
+```
+- `select`쿼리를 날리지 않는다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member = em.getReference(Member.class, memberId);
+        // 데이터 사용
+        System.out.println("회원 이름: " + member.getUsername());
+    }
+}
+```
+- `member` 데이터를 실제 호출하는 순간에 `select`쿼리를 호출한다.
+
+![](/assets/레퍼런스.png)
+- 프록시를 사용하여 진짜 객체를 주는것이 아닌 가짜 객체를 준다.
+- 껍데기만 존재하고 내부는 빈 상태.
+
+### 프록시 특징
+
+![](/assets/프록시특징.png)
+- 실제 클래스를 상속받아 만들어진다.
+    - 실제 클래스와 겉모습이 같다.
+    - 하이버네이트 내부 라이브러리를 사용해 상속한다.
+- 사용자입장에서는 진짜인지 프록시 객체인지 구분하지 않는다.
+
+![](/assets/위임.png)
+- 프록시 객체는 실제 객체의 참조(target)를 보관한다.
+- 프록시 객체에 있는 메서드를 호출하면, 프록시 객체가 실제 객체의 메서드를 호출한다.
+
+### 프록시 객체의 초기화
+
+```java
+public class App {
+    public void getMemberName() {
+        // 실제 객체가 아닌 프록시 객체를 가져온다.
+        Member member = em.getReference(Member.class, "id");
+        // 처음에 getName()을 호출하면 target에 값이 없는 상태다.
+        // 그럼 영속성 컨텍스트에 데이터를 요청해 그 값을 반환한다.
+        member.getName();
+    }
+}
+```
+
+![](/assets/프록시초기화.png)
+
+1. 데이터를 요청했는데 Member의 target에 데이터가 없다.
+2. JPA가 진짜 Member 객체를 가져오라고 영속성 컨텍스트에 요청한다.
+3. 영속성 컨텍스트는 DB를 조회해서 실제 Entity 객체를 생성해 보내준다.
+4. target과 진짜 객체인 Entity를 연결한다.
+5. target의 진짜 getName()을 통해서 값을 반환한다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member = em.getReference(Member.class, memberId);
+        // 실제 레퍼런스 조회
+        System.out.println("회원 이름: " + member.getUsername());
+    }
+}
+```
+- `userName`을 실제 가져다 쓴느 시점에 영ㅅ혹성 컨텍스트로 `Member`를 요청하여 실제 레퍼런스를 가진다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member = em.getReference(Member.class, memberId);
+        // 실제 레퍼런스 조회
+        System.out.println("회원 이름: " + member.getUsername());
+        // 다시 하면 프록시에서 조회
+        System.out.println("회원 이름: " + member.getUsername());
+    }
+}
+```
+- 이제 target에 값이 존재하기 때문에 다음에 조회해도 db에 쿼리를 다시 날리지 않는다.
+
+### 주의 사항
+
+- 프록시 객체는 처음 사용할 때 한번만 초기화 된다.
+  - 한 번 초기화 되면 그 내용을 그대로 사용한다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member = em.getReference(Member.class, memberId);
+
+        System.out.println("before: " + member.getClass());
+        System.out.println("회원 이름: " + member.getUsername());
+        System.out.println("after: " + member.getClass());  // before와 같은 값 출력
+    }
+}
+```
+- 프록시 객체를 초기화 할 때, 그 즉시 프록시 객체가 실제 엔티티로 바뀌는 것이 아니다.
+  - 초기화되면 프록시 객체를 통해 실제 엔티티에 접근이 가능해 지는 것.
+  - 그래서 프록시를통해 데이터를 가져온 뒤에도 `getClass()`의 값은 동일하다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        Member member2 = new Member();
+        member2.setUsername("member2");
+        em.persist(member2);
+
+        em.flush();
+        em.clear();
+
+        Member m1 = em.find(Member.class, member1.getId());
+        Member m2 = em.find(Member.class, member2.getId());
+
+        // find()로 가져왔고 타입을 정확하게 비교하는 것이므로 true를 출력한다.
+        System.out.println("m1 == m2: " + (m1.getClass() == m2.getClass()));
+
+        Member m3 = em.getReference(Member.class, member1.getId());
+        Member m4 = em.find(Member.class, member2.getId());
+
+        // m3는 getReference()이므로 false를 출력한다.
+        System.out.println("m1 == m2: " + (m1.getClass() == m2.getClass()));
+
+        tx.commit();
+    }
+}
+```
+
+```java
+public class App {
+    public static void main(String[] args) {
+        Member m1 = em.find(Member.class, member1.getId());
+        Member m2 = em.find(Member.class, member2.getId());
+        // true
+        System.out.println("m1 == Member: " + (m1.getClass() == m2.getClass()));
+
+        Member m1 = em.find(Member.class, member1.getId());
+        Member m2 = em.getReference(Member.class, member2.getId());
+        // false
+        System.out.println("m1 == Member: " + (m1.getClass() == m2.getClass()));
+    }
+
+    public void logic(Member m1, Member m2) {
+        // 실제 로직 상에서는 실제 인티티가 넘어올지 프록시가 넘어올지 모르기 때문에
+        // 비교할 때는 instance of를 사용해야 한다.
+        // false
+        System.out.println("m1 == m2: " + (m1 == m2));
+        // true
+        System.out.println("m1 == m2: " + (m1 instanceof m2));
+        System.out.println("m2 == m2: " + (m2 instanceof m2));
+
+    }
+}
+```
+- 프록시 객체는 원본 엔티티를 상속 받든다.
+  - 즉, 프록시인 멤버와 아닌 멤버가 타입이 맞지 않을 수 있으므로 주의해야 한다.
+  - 타입 비교시 `instance of`를 사용하도록 하자.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        Member m1 = em.find(Member.class, member1.getId());
+        // find()로 진짜 객체를 가져오기 때문에 'Member'라고 출력된다.
+        System.out.println("m1 = " + m1.getClass());
+
+        // find()한 뒤에 getReference()로 가져오게 되면
+        Member m2 = em.getReference(Member.class, member1.getId());
+        // 'Proxy'가 아니라 'Member'로 출력된다.
+        System.out.println("m2 = " + m2.getClass());
+
+        // 프록시든 아니면 한 영속성 컨텍스트에서 가져오고 PK가 같다면 항상 true가 된다.
+        System.out.println("m1 == reference = " + (m1 == reference));
+
+        tx.commit();
+    }
+}
+```
+- `find()`후 `getReference()`를 호출하면 실제 엔티티를 반환한다.
+  - 이미 멤버를 영속성 컨텍스트에 넣어놨기 때문
+  - 성능 최적화의 이점이 사라진다.
+- 실제 객체와 레퍼런스로 가져온 객체를 같다고 취급한다.
+  - jpa는 한 트랜잭션 안에서 pk가 같다면 같은 객체임을 보장한다.
+  - 원본과 레퍼런스를 `==`비교시 항상 `true`가 나온다.
+  
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        Member m1 = em.getReference(Member.class, member1.getId());
+        System.out.println("m1 = " + m1.getClass());
+
+        Member reference = em.getReference(Member.class, member1.getId());
+        System.out.println("reference = " + reference.getClass());
+
+        // true
+        System.out.println("a == a: " + (m1 == reference));
+
+        tx.commit();
+    }
+}
+```
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        // 프록시로 불러온 다음
+        Member refMember = em.getReference(Member.class, member1.getId());
+        // 출력을 위해 실제 값으로 초기화 한다.
+        // 클래스 값은 프록시로 출력된다.
+        System.out.println("refMember = " + refMember.getClass());
+
+        Member findMember = em.find(Member.class, member1.getId());
+        // 프록시가 초기화 되었으니 당연히 Member 타입이 출력되어야 하는 것 아닌가? 할 수 있지만
+        // JPA는 PK가 같으면 무조건 같음을 보장해줘야 하기 때문에 프록시로 나온다.
+        System.out.println("findMember = " + findMember.getClass());
+
+        // JPA에서는 무조건 이게 참이 되도록 맞춘다!
+        System.out.println("a == a: " + (refMember == findMember));
+
+        tx.commit();
+    }
+}
+```
+- 프록시가 초기화 된 상태에서 `find()`를 하면 어떻게 될까?
+- JPA는 기본적으로 `refMember == findMember`의 값이 `true`임을 보장해야 한다.
+- 따라서 `refMember`, `findMember` 모두 프록시로 출력된다.
+- 프록시를 한번 조회한 뒤에는 `find()`를 한 객체에도 프록시로 반환한다.
+  - jpa의 룰을 보장
+  - 처음에 엔티티로 반환하면 엔티티로, 프록시로 반환하면 계속 프록시로 반환한다.
+- `instance of`를 기억하도록 하자.
+
+### 준영속 상태의 프록시
+- 영속성 컨텍스트의 도움을 받을 수 없는 준영속 상태이면, 프록시를 초기화할 때 문제가 발생한다.
+  - 하이버네이트는 `org.hibernate.LazyInitializationException` 예외를 터뜨린다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        // 프록시 생성
+        Member refMember = em.getReference(Member.class, member1.getId());
+        // 프록시로 출력한다.
+        System.out.println("refMember = " + refMember.getClass());
+
+        // 실제 DB를 조회하면서 쿼리를 날리고 프록시를 초기화 한다.
+        refMember.getUsername();
+        // 타입은 여전히 프록시로 출력된다.
+        System.out.println("refMember = " + refMember.getClass());
+
+        tx.commit();
+    }
+}
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        // 프록시 생성
+        Member refMember = em.getReference(Member.class, member1.getId());
+        // 프록시로 출력한다.
+        System.out.println("refMember = " + refMember.getClass());
+
+        // 실제 DB를 조회하면서 쿼리를 날리고 프록시를 초기화 한다.
+        refMember.getUsername();
+        // 타입은 여전히 프록시로 출력된다.
+        System.out.println("refMember = " + refMember.getClass());
+
+        tx.commit();
+    }
+}
+```
+- 같은 영속성 컨텍스트 안에서는 같은 프록시를 출력한다.
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        // 프록시 생성
+        Member refMember = em.getReference(Member.class, member1.getId());
+        // 프록시로 출력
+        System.out.println("refMember = " + refMember.getClass());
+
+        // detach(), clear(), close()로 영속성 컨텍스트를 준영속으로 만든다.
+        em.close();
+
+        // 실제 데이터로 초기화 하면서 데이터를 가져와야 하지만
+        // 영속성 컨텍스트로 관리하지 않게 되면서 exception이 떨어진다.
+        refMember.getUsername();
+        System.out.println("refMember = " + refMember.getClass());
+
+        tx.commit();
+    }
+}
+```
+
+### 프록시 유틸리티 메서드
+
+**프록시 인스턴스의 초기화 여부 확인**
+```java
+public class App {
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory();
+        ...
+        // 앞에서 초기화 했다면 true, 아니라면 false
+        System.out.println("isLoaded: " + emf.getPersistenceUnitUtil().isLoaded(refMember));
+    }
+}
+```
+- `PersistenceUnitUtil.isLoaded(Object entity)`
+
+**프록시 클래스 확인**
+- `entity.getClass().getName()`
+
+**프록시 강제 초기화**
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        Member refMember = em.getReference(Member.class, member1.getId());
+        System.out.println("refMember = " + refMember.getClass());
+
+        // 이런 방식으로 강제 호출하는 것 보다는
+        refMember.getUsername();
+        // 이 방식을 더 권유한다.
+        Hibernate.initialize(refMember);
+
+        tx.commit();
+    }
+}
+```
