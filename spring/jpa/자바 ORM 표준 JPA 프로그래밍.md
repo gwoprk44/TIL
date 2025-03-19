@@ -131,6 +131,18 @@
     - [주의 사항](#주의-사항)
     - [준영속 상태의 프록시](#준영속-상태의-프록시)
     - [프록시 유틸리티 메서드](#프록시-유틸리티-메서드)
+  - [즉시 로딩과 지연 로딩](#즉시-로딩과-지연-로딩)
+    - [지연 로딩](#지연-로딩)
+    - [즉시 로딩](#즉시-로딩)
+    - [fetch join](#fetch-join)
+  - [영속성 전이와 고아 객체](#영속성-전이와-고아-객체)
+    - [영속성 전이](#영속성-전이)
+    - [고아 객체 제거](#고아-객체-제거)
+      - [orphanRemoval = true](#orphanremoval--true)
+      - [CascadeType.REMOVE](#cascadetyperemove)
+      - [`CascadeType.ALL`과 `orphanRemoval = true` 동시 사용](#cascadetypeall과-orphanremoval--true-동시-사용)
+  - [실전 예제-5](#실전-예제-5)
+    - [글로벌 fetch 전략 설정](#글로벌-fetch-전략-설정)
 
 
 
@@ -1920,5 +1932,341 @@ public class App {
 
         tx.commit();
     }
+}
+```
+
+## 즉시 로딩과 지연 로딩
+
+### 지연 로딩
+```java
+@Entity
+public class Member {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn
+    private Team team;
+}
+```
+- `fetch = FetchType.LAZY`
+  - 프록시 객체로 조회한다.
+  - 즉, 멤버 클랫흐만 db에서 조회하고 team은 조회하지 않는다.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Team team = new Team();
+        team.setName("teamA");
+        em.persist(team);
+
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        member1.setTeam(team);
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        // 이때는 프록시로 남아있다가
+        Member m = em.find(Member.class, member1.getId());
+        System.out.println("m = " + m.getTeam().getClass());
+
+        System.out.println("=============");
+        // 이 시점이 되어서야 필요한 정보를 얻기 위한 쿼리가 날아간다.
+        // 지연 로딩을 사용하면 이렇게 연관된 데이터를 프록시로 가져온다.
+        // m.getTeam()은 프록시로 가져오기 때문에 이 시점에는 Entity로 초기화되지 않는다.
+        // getTeam().getName()으로 그 안에 있는 데이터를 조회해야할 때 쿼리가 나가면서 초기화 된다.
+        m.getTeam().getName();
+        System.out.println("=============");
+
+        tx.commit();
+    }
+}
+```
+![](/assets/lazy.png)
+
+- 멤버를 조회하면 당장 조회하지 않는 team을 프록시로 박아놓는다.
+- `member.getTeam().getName()`으로 실제 사용하는 시점이 되면 DB를 조회해서 초기화 된다.
+  - `getTeam()`이 아니라 그 안의 `getName()`으로 데이터를 실제 조회할 때임을 주의하자.
+
+### 즉시 로딩
+
+만약 Member와 Team 둘 다 자주 사용한다면 매번 쿼리가 두 번씩 나가게 되면서 성능상 손해를 보게 된다. 그래서 사용하는 것이 EAGER 로딩이다.
+
+```java
+@Entity
+public class Member {
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn
+    private Team team;
+}
+```
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Team team = new Team();
+        team.setName("teamA");
+        em.persist(team);
+
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        member1.setTeam(team);
+        em.persist(member1);
+
+        em.flush();
+        em.clear();
+
+        Member m = em.find(Member.class, member1.getId());
+        System.out.println("m = " + m.getTeam().getClass());
+
+        System.out.println("=============");
+        m.getTeam().getName();
+        System.out.println("=============");
+
+        tx.commit();
+    }
+}
+```
+- member와 team에 대한 쿼리를 한번에 날린다.
+- 따라서 team에 대한 정보를 조회시 `getClass()`를 사용하면 프록시가 아니라 진짜 객체가 나온다.
+
+![](/assets/eager.png)
+1. Member를 가지고 올때 EAGER로 걸린 엔티티를 조인하여 쿼리를 한번에 날린다.
+   - 웬만한 JPA 쿼리는 이렇게 한방에 날리는걸 선호.
+2. 일단 Member를 가지고 온 다음 EAGER로 되어있는 엔티티를 확인하여 한번 더 쿼리를 날린다.
+   - Member, Team에 `em.find()`를 각각하여 두번의 쿼리를 날린다.
+   - 성능이 좋지않다.
+
+가급적이면 실무에서는 즉시로딩을 사용하지말고 지연로딩을 사용하도록 하자.
+- 예상치 못한 sql이 발생 가능하다.
+- N+1 문제를 일으킨다.
+
+따라서, 즉시로딩은 사용하지 말고 지연로딩을 사용하자. 
+- 기본적으로 모든 연관관계 매핑은 lazy로 설정한다.
+- 특히, `@ManyToOne`, `@OneToOne`은 기본이 즉시 로딩이므로 따로 설정해주자.
+
+### fetch join
+- 런타임에 동적으로 내가 원하는 정보만 선택해서 가져오는 방법
+- join을 이용하여 쿼리를 한번만 날린다.
+  - 상황에 따라 이용.
+
+```java
+public class App {
+    public void printUserAndTeam(String memberId) {
+        Team teamA = new Team();
+        teamA.setName("teamA");
+        em.persist(teamA);
+
+        Team teamB = new Team();
+        teamB.setName("teamB");
+        em.persist(teamB);
+
+        Member member1 = new Member();
+        member1.setUsername("member1");
+        member1.setTeam(teamA);
+        em.persist(member1);
+
+        Member member2 = new Member();
+        member2.setUsername("member2");
+        member2.setTeam(teamB);
+        em.persist(member2);
+
+        em.flush();
+        em.clear();
+
+        // fetch join으로 한 방 쿼리를 날린다.
+        List<Member> members = em.createQuery("select m from Member m join fetch m.team", Member.class).getResultList();
+
+        // 이제 다 값이 채워져서 어떤 값을 조회해도 쿼리가 나가지 않는다.
+
+        tx.commit();
+    }
+}
+```
+
+## 영속성 전이와 고아 객체
+
+### 영속성 전이
+
+- 특정 엔티티를 영속 상태로 만들 때 관련 엔티티도 영속 상태로 만드는것.
+- 즉시 로딩, 지연 로딩, 연관관계 세팅과 관련이 없다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Child child1 = new Child();
+        Child child2 = new Child();
+
+        Parent parent = new Parent();
+        parent.addChild(child1);
+        parent.addChild(child2);
+
+        // 부모, 자식 각각 영속화 하면 총 3번 해줘야 해서 번거롭다.
+        em.persist(parent);
+        em.persist(child1);
+        em.persist(child2);
+
+        tx.commit();
+    }
+}
+```
+- 각각의 엔티티를 영속화해야 insert 쿼리를 날린다.
+- 이러한 반복은 번거롭고 유지보수성이 떨어진다.
+
+```java
+@Entity
+public class Parent {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    // cascade 옵션을 주면 영속화가 자식에게도 적용된다.
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    private List<Child> childList = new ArrayList<>();
+
+    public void addChild(Child child) {
+        childList.add(child);
+        child.setParent(this);
+    }
+}
+```
+
+```java
+@Entity
+public class Child {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Parent parent;
+}
+```
+
+- Cascade를 사용하면 parent만 영속화하여도 자식까지 영속화된다.
+
+![](/assets/cascade.png)
+
+- 부모를 영속화할 때 자식도 적용시키는 것이 `cascade`이다.
+- 영속성 전이는 연관 관계 매핑과 관련이 없다.
+- 자식의 부모가 하나일 때, 단일 엔티티에 완전 종속적이고 라이프 사이클이 같을때만 적용한다.
+- 다른 엔티티에서도 관리하는 자식이라면 쓰지 않도록 하자.
+
+
+### 고아 객체 제거
+- 부모 엔티티와 연관관계가 끊어진 자식을 자동으로 삭제한다.
+
+#### orphanRemoval = true
+```java
+@Entity
+public class Parent {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    // 고아 객체 옵션을 주면 부모가 삭제됐을 때 자식 엔티티를 컬렉션에서 삭제한다.
+    @OneToMany(mappedBy = "parent", orphanRemoval = true)
+    private List<Child> childList = new ArrayList<>();
+
+    public void addChild(Child child) {
+        childList.add(child);
+        child.setParent(this);
+    }
+}
+```
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Parent parent = em.find(Parent.class, id);
+        // 자식 Entity를 컬렉션에서 제거한다. 즉, 연관 관계를 끊는다.
+        // 그럼 그 Entity를 삭제한다.
+        parent.getChildren().remove(0);
+
+        tx.commit();
+    }
+}
+```
+- 부모 Entity와 연관 관계가 끊어진 자식 Entity를 자동으로 삭제한다.
+  - Entity의 참조가 제거되면 그 객체를 다른 곳에서 참조하지 않는 고아 객체로 보고 삭제한다.
+  - 따라서 참조하는 곳이 하나일 때 사용해야 한다.
+- 연관 관계를 끊었을 때 `delete from child where id = ?` 쿼리가 자동으로 나간다.
+- `@OneToOne`, `@OneToMany`만 가능하다.
+
+#### CascadeType.REMOVE
+```java
+@Entity
+public class Parent {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    // cascade에 remove 옵션을 준다.
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.REMOVE)
+    private List<Child> childList = new ArrayList<>();
+
+    public void addChild(Child child) {
+        childList.add(child);
+        child.setParent(this);
+    }
+}
+```
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Parent parent = em.find(Parent.class, id);
+        // 부모를 삭제하면 자식도 같이 삭제한다.
+        em.remove(parent);
+
+        tx.commit();
+    }
+}
+```
+- 부모를 제거할 때 자식은 고아가 되므로 orphanRemoval = true라면 자식도 제거된다.
+
+#### `CascadeType.ALL`과 `orphanRemoval = true` 동시 사용
+
+- Entity는 스스로 생명 주기를 관리한다.
+  - JPA 영속성 컨텍스트(EntityManager)를 통해 라이프 사이클을 관리한다.
+    - em.persist()로 영속화하고 em.remove()로 제거한다.
+- 두 옵션을 모두 활성화 하면, 부모 Entity를 통해서 자식의 생명 주기를 관리할 수 있다.
+  - 부모만 JPA로 영속화하거나 제거하고 자식은 부모가 관리하게 된다.
+  - DB로 따지면 자식의 DAO나 repository가 없어도 된다.
+- 도메인 주도 설계의 Aggregate Root 개념을 구현할 때 유용하다.
+  - repository는 Aggregate Root만 컨택하고 나머지는 repository를 만들지 않는 방법
+  - Aggregate Root를 통해서 생명주기를 관리한다.
+    - Aggregate Root가 parent이고, child는 Aggreate Root가 관리한다.
+
+## 실전 예제-5
+
+### 글로벌 fetch 전략 설정
+- 모든 연관관계를 지연 로딩으로 설정.
+
+```java
+@Entity
+@Table(name = "ORDERS")
+public class Order {
+    @Id
+    @GeneratedValue
+    @Column(name = "order_id")
+    private Long id;
+
+    // 지연 로딩으로 수정한다.
+    // CascadeType.ALL: 주문을 할 때 배송도 생성하겠다는 의미. 둘의 라이프 사이클을 맞추게 된다.
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "DELIVERY_ID")
+    private Delivery delivery;
+
+    // 주문을 생성할 때 주문 아이템도 같이 생성한다.
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems = new ArrayList<>();
 }
 ```
