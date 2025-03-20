@@ -143,6 +143,32 @@
       - [`CascadeType.ALL`과 `orphanRemoval = true` 동시 사용](#cascadetypeall과-orphanremoval--true-동시-사용)
   - [실전 예제-5](#실전-예제-5)
     - [글로벌 fetch 전략 설정](#글로벌-fetch-전략-설정)
+- [값 타입](#값-타입)
+  - [기본 값 타입](#기본-값-타입)
+    - [참고](#참고)
+  - [임베디드 타입](#임베디드-타입)
+    - [사용법](#사용법)
+    - [특징](#특징-1)
+    - [임베디드 타입과 테이블 매핑](#임베디드-타입과-테이블-매핑)
+    - [임베디드 타입과 연관 관계](#임베디드-타입과-연관-관계)
+    - [@AttributeOverride](#attributeoverride)
+    - [임베디드 타입과 null](#임베디드-타입과-null)
+  - [값 타입과 불변 객체](#값-타입과-불변-객체)
+    - [객체 타입의 한계](#객체-타입의-한계)
+    - [불변 객체](#불변-객체)
+  - [값 타입의 비교](#값-타입의-비교)
+    - [동일성 비교](#동일성-비교)
+    - [동등성 비교](#동등성-비교)
+  - [값 타입 컬렉션](#값-타입-컬렉션)
+    - [@ElementCollection, @CollectionTable](#elementcollection-collectiontable)
+    - [값 타입 저장](#값-타입-저장)
+    - [값 타입 조회](#값-타입-조회)
+    - [값 타입 수정](#값-타입-수정)
+    - [제약 사항](#제약-사항)
+    - [대안](#대안)
+    - [활용](#활용)
+  - [실전예제-6](#실전예제-6)
+
 
 
 
@@ -2268,5 +2294,662 @@ public class Order {
     // 주문을 생성할 때 주문 아이템도 같이 생성한다.
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
+}
+```
+
+# 값 타입
+
+- int, Integer처럼 단순히 값으로 사용하는 자바 기본 타입 혹은 객체
+- 식별자가 없고 값만 존재하므로 추적이 불가능하다.
+
+## 기본 값 타입
+- `string name`, `int age`와 같은 값
+- 생명 주기가 엔티티에 의존한다.
+  - 회원을 삭제하면 이름, 나이도 함께 삭제된다.
+- 값 타입은 공유하면 안된다.
+
+### 참고
+- 자바의 기본 타입은 절대로 공유되지 않는다.
+  - 항상 값을 복제해서 사용하기 때문.
+```java
+public class ValueMain {
+
+    public static void main(String[] args) {
+        int a = 10;
+        // a에 있는 값이 복사가 되어서 b에 할당된다.
+        // a와 b는 완전히 별도의 저장 공간을 가지고 있다.
+        // 즉, 공유되지 않는다.
+        int b = a;
+
+        a = 20;
+
+        // a = 20, b = 10
+        // a의 값이 복사가 돼서 b로 들어갔기 때문에 b는 변경되지 않는다.
+        System.out.println("a = " + a);
+        System.out.println("b = " + b);
+    }
+
+}
+```
+- 기본 타입은 공유되지 않기 때문에 사이드 이펙트가 없다.
+```java
+public class ValueMain {
+
+    public static void main(String[] args) {
+        Integer c = 10;
+        // c의 참조값만 넘어간다.
+        Integer d = c;
+
+        // setValue()는 존재하지 않는 메서드지만 있다고 가정하고 값을 변경한다.
+        // 이렇게 사용하면 레퍼런스를 넘겨서 같은 인스턴스를 공유하기 때문에 둘 다 값이 바뀐다.
+        // 하지만 이런 메서드를 제공하지 않으므로
+        // 즉, 값을 변경할 수 있는 방법이 없으므로 사이드 이펙트가 일어나지 않는다.
+        c.setValue(20);
+
+        System.out.println("c = " + c);
+        System.out.println("d = " + d);
+    }
+
+}
+```
+- 클래스는 레퍼런스를 가져가기 때문ㅇ ㅔ공유가 된다.
+  - 따라서 Integer 같은 래퍼 클래스나 String 같은 특수한 클래스는 공유 가능한 객체이다.
+  - 그러나 변경할 수 있는 메서드가 없기 때문에 사실상 변경을 불가능 해 사이드 이펙트를 막을 수 있다.
+
+## 임베디드 타입
+- 새로운 값 타입을 직접 정의 가능하다.
+- 주로 기본 값 타입을 모아서 만들기 때문에 복합 값 타입이라고도 한다.
+- int, String처럼 임베디드 타입도 엔티티가 아닌 그냥 값 타입이다.
+  - 변경해도 추적 불가.
+
+![](/assets/임베디드.png)
+- 근무 시작일, 근무 종료일과 도시, 우편 번호, 주소 등은 공통으로 묶을 수 있는 데이터들이다.
+
+![](/assets/임베디드예시.png)
+
+- 공통된 데이터들을 묶어 새로운 클래스를 생성하여 데이터를 정의한다.
+
+### 사용법
+- 기본 생성자를 반드시 정의해야 한다.
+- `@Embeddable`
+  - 값을 정의하는 곳에 사용
+- `@Embedded`
+  - 값 타입을 사용하는 곳에 사용
+
+### 특징
+- 재사용이 가능하다.
+- 응집도가 높다.
+  - `Period.isWork()`와 같이 해당 값 타입만 사용하는 의미있는 메서드 생성이 가능하다.
+  - 임베디드 타입을 포함한 모든 값 타입은 값 타입을 소유한 엔티티에 생명주기를 의존한다.
+
+![](/assets/임베디드테이블.png)
+
+```java
+@Entity
+public class Member {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(name = "name")
+    private String username;
+
+    // 임베디드 타입으로 수정한다.
+    @Embedded
+    private Period period;
+
+    // 임베디드 타입으로 수정한다.
+    @Embedded
+    private Address address;
+
+    // 응집성 있는 로직 구현
+    public boolean isWork() {
+        return true;
+    }
+}
+```
+```java
+@Embeddable
+public class Period {
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+}
+```
+```java
+@Embeddable
+public class Address {
+
+    private String city;
+    private String street;
+    private String zipcode;
+
+    // 기본 생성자 필수
+    public Address() {
+    }
+
+    public Address(String city, String street, String zipcode) {
+        this.city = city;
+        this.street = street;
+        this.zipcode = zipcode;
+    }
+}
+```
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("name");
+        member.setAddress(new Address("city", "street", "10001"));
+        member.setPeriod(new Period());
+
+        em.persist(member);
+
+        tx.commit();
+    }
+}
+```
+
+### 임베디드 타입과 테이블 매핑
+- 임베디드 타입은 엔티티의 값일 뿐이다.
+- 임베디드 타입을 사용하기 전과 후에 **매핑하는 테이블은 같다.**
+- 객체와 테이블을 아주 세밀하게 매핑하는것이 가능해진다.
+- 공통으로 사용할 수 있는 도메인 언어가 많아진다.
+
+### 임베디드 타입과 연관 관계
+![](/assets/임베디드연관.png)
+
+- `Address`와 `ZipCode`처럼 임베디드 타입도 임베디드 타입을 가질 수 있다.
+- 임베디드 타입이 엔티티를 가질 수도 있다.
+  - FK만 가지고 있으면 가능.
+
+### @AttributeOverride
+- 한 엔티티에 같은 값 타입을 사용할 때 적용한다.
+```java
+@Entity
+public class Member {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(name = "name")
+    private String username;
+
+    @Embedded
+    private Period period;
+
+    @Embedded
+    private Address homeAddress;
+
+    // 칼럼 이름을 재정의 해준다.
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "city", column = @Column(name = "work_city")),
+            @AttributeOverride(name = "street", column = @Column(name = "work_street")),
+            @AttributeOverride(name = "zipcode", column = @Column(name = "work_zipcode"))
+    })
+    private Address workAddress;
+}
+```
+- 이렇게 하면 컬럼 명을 새로 매핑하여 준다.
+
+### 임베디드 타입과 null
+- 임베디드 타입의 값이 null이면, 그 타입 안에 정의하여 매핑한 컬럼값은 모두 null이다.
+
+## 값 타입과 불변 객체
+- 값 타입은 복잡한 객체를 단순하게 표현하기 위해 만든 개념이다.
+  - 따라서 값 타입은 안전하고 단순하게 다룰 수 있어야한다.
+- 임베디드 타입 등 값 타입을 여러 엔티티에서 공유하면 위험하다.
+    - 값 타입의 실제 인스턴스 값을 공유하는 것은 매우 위험하다.
+    - 일부러 데이터를 공유하여 사용하고 싶다면 임베디드 타입이 아니라 엔티티로 만들어 공유해야한다!
+![](/assets/공유.png)
+- 대신, 값(인스턴스)를 복사하여 사용해야 한다.
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Address address = new Address("city", "street", "10012");
+
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setAddress(address);
+        em.persist(member);
+
+        // 값을 복사해서 사용한다.
+        Address address2 = new Address(address.getCity(), address.getStreet(), address.getZipcode());
+
+        Member member2 = new Member();
+        member2.setUsername("member2");
+        member2.setAddress(address2);
+        em.persist(member2);
+
+        // 이제 회원 1만 update 쿼리가 나간다.
+        member.getAddress().setCity("new City");
+
+        tx.commit();
+    }
+}
+```
+
+### 객체 타입의 한계
+- 항상 값을 복사해서 사용하면 공유 참조 때문에 발생하는 부작용을 피할 수 있다.
+- 그런데 임베디드 타입 등 직접 정의한 타입은 자바 기본 타입이 아니라 객체 타입이다.
+  - 기본 값 타입은 `=`로 할당해도 복사해서 들어가기 때문에 사이드 이펙트가 발생하지 않지만
+  - 객체 타입은 참조 값을 직접 가지므로 둘 다 값이 바뀌는 사이드 이펙트를 막을 방법이 없다.
+- 즉, 객체의 공유 참조는 피할수 없다.
+
+### 불변 객체
+- 생성 시점 이후 절대 값을 변경할 수 없는 객체
+  - Integer, String은 자바가 제공하는 대표적인 불변 객체이다.
+- 생성자로만 값을 설정하고 수정자(Setter)을 만들지 않으면 된다.
+  - 객체 타입을 수정할 수 없게 만들면 컴파일 시점에서 오류가 발생하기 때문에 사이드 이펙트를 원천 차단 가능하다.
+- 값 타입은 불변 객체로 설계하도록 하자!
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Address address = new Address("city", "street", "10012");
+
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setAddress(address);
+        em.persist(member);
+
+        // city를 바꾸고 싶다면 setCity() 대신 
+        // Address 객체를 새로 만들어서 통으로 갈아 끼운다.
+        Address newAddress = new Address("new city", address.getStreet(), address.getZipcode());
+        member.setAddress(newAddress);
+
+        tx.commit();
+    }
+}
+```
+- 값을 바꾸고 싶다면 새로운 객체를 생성하여 넣어주어야 한다.
+
+## 값 타입의 비교
+
+- 값 타입은 인스턴스가 달라도 그 안에 있는 값이 같다면 같은 것으로 본다.
+
+### 동일성 비교
+- 인스턴스의 참조 값을 비교하는 방법
+- `==`을 사용한다.
+
+### 동등성 비교
+- 인스턴스의 값을 비교하는 방법
+- `equals()`를 사용한다.
+
+따라서 값 타입은 `equals()`를 사용하여 동등성 비교를 하여야 한다.
+그러나 `equals()` 기본 구현은 `==`비교를 사용하기 때문에 오버라이드 해서 사용하여야 한다.
+
+```java
+class Address {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Address address = (Address) o;
+        return Objects.equals(city, address.city) && Objects
+                .equals(street, address.street) && Objects.equals(zipcode, address.zipcode);
+    }
+
+    // equals()를 구현하면 hashCode()도 만들어줘야
+    // 해시 맵 등 자바 컬렉션에서 효율적으로 사용할 수 있다.
+    @Override
+    public int hashCode() {
+        return Objects.hash(city, street, zipcode);
+    }
+}
+```
+
+## 값 타입 컬렉션
+- 값 타입을 컬렉션에 담아 사용하는 방식이다.
+
+![](/assets/값컬렉션.png)
+- favoriteFoods와 addressHistory는 컬렉션 타입이다.
+  - DB는 컬렉션을 담을 수 있는 타입이 없다.
+- 일대다 개념처럼 별도의 테이블로 만든다.
+- 별도의 식별자 없이 소속된 테이블의 외래 키와 값 타입을 조합해 PK로 쓴다.
+  - ID를 따로 만들어 PK를 쓰게 되면 값 타입이 아니라 Entity가 되기 때문이다.
+
+### @ElementCollection, @CollectionTable
+- 값 타입을 하나 이상 저장할 때 사용한다.
+
+```java
+@Entity
+public class Member {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(name = "name")
+    private String username;
+
+    @Embedded
+    private Address homeAddress;
+
+    // 컬렉션으로 이루어진 값 타입에 달아준다.
+    @ElementCollection
+    @CollectionTable(
+            // 값을 넣을 테이블 이름을 정의한다. 
+            name = "FAVORITE_FOOD",
+            // 외래키를 명시한다.
+            joinColumns = @JoinColumn(name = "MEMBER_ID"))
+    // addressHistory는 Address 타입 내부에 city, address 등 다양한 필드가 있지만
+    // favoriteFoods는 String 하나이고 내가 정의한 타입이 아니기 때문에 칼럼 이름을 지정해줄 수 있다.
+    @Column(name = "FOOD_NAME")
+    private Set<String> favoriteFoods = new HashSet<>();
+
+    @ElementCollection
+    @CollectionTable(name = "ADDRESS", joinColumns = @JoinColumn(name = "MEMBER_ID"))
+    private List<Address> addressHistory = new ArrayList<>();
+}
+```
+
+### 값 타입 저장
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setHomeAddress(new Address("home city", "street", "12345"));
+
+        // 값 타입 컬렉션
+        member.getFavoriteFoods().add("치킨");
+        member.getFavoriteFoods().add("족발");
+        member.getFavoriteFoods().add("피자");
+
+        member.getAddressHistory().add(new Address("old1", "street", "12345"));
+        member.getAddressHistory().add(new Address("old2", "street", "12345"));
+
+        // member만 영속화 한다.
+        em.persist(member);
+
+        tx.commit();
+    }
+}
+```
+- 값 타입 컬렉션을 따로 persist하지 않고 member만 persist해도 같이 저장된다.
+- 값 타입은 member에 의존하기 때문에 member가 변경되면 함께 변경된다.
+  - member와 라이프사이클이 같다.
+- 즉, cascade와 orphanRemoval을 모두 켠 상태와 동일하다.
+
+### 값 타입 조회
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setHomeAddress(new Address("home city", "street", "12345"));
+
+        member.getFavoriteFoods().add("치킨");
+        member.getFavoriteFoods().add("족발");
+        member.getFavoriteFoods().add("피자");
+
+        member.getAddressHistory().add(new Address("old1", "street", "12345"));
+        member.getAddressHistory().add(new Address("old2", "street", "12345"));
+
+        em.persist(member);
+
+        // DB에는 데이터가 insert되고 영속성 컨텍스트를 깔끔하게 처리한 상태에서
+        em.flush();
+        em.clear();
+
+        // member를 다시 조회한다.
+        Member findMember = em.find(Member.class, member.getId());
+
+        tx.commit();
+    }
+}
+```
+- member를 조회하면 값 타입 컬렉션은 조회되지 않는다.
+  - 값 타입 컬렉션에 자동으로 지연로딩이 적용되기 때문.
+  - 임베디드 값 타입은 소속된 값이므로 함께 조회된다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setHomeAddress(new Address("home city", "street", "12345"));
+
+        member.getFavoriteFoods().add("치킨");
+        member.getFavoriteFoods().add("족발");
+        member.getFavoriteFoods().add("피자");
+
+        member.getAddressHistory().add(new Address("old1", "street", "12345"));
+        member.getAddressHistory().add(new Address("old2", "street", "12345"));
+
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        Member findMember = em.find(Member.class, member.getId());
+
+        // 값 타입 컬렉션을 조회한다.
+        List<Address> addressHistory = findMember.getAddressHistory();
+        for (Address address : addressHistory) {
+            System.out.println("address = " + address.getCity());
+        }
+
+        tx.commit();
+    }
+}
+```
+
+### 값 타입 수정
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setHomeAddress(new Address("home city", "street", "12345"));
+
+        member.getFavoriteFoods().add("치킨");
+        member.getFavoriteFoods().add("족발");
+        member.getFavoriteFoods().add("피자");
+
+        member.getAddressHistory().add(new Address("old1", "street", "12345"));
+        member.getAddressHistory().add(new Address("old2", "street", "12345"));
+
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        Member findMember = em.find(Member.class, member.getId());
+
+        // 값 타입인 임베디드 타입은 immutable 해야 하기 때문에 이렇게 변경하면 절대 안된다.
+        // findMember.getHomeAddress().setCity("new city");
+
+        // address 인스턴스 자체를 갈아끼워야 한다.
+        Address a = findMember.getHomeAddress();
+        findMember.setHomeAddress(new Address("new city", a.getStreet(), a.getZipcode()));
+
+        // 컬렉션 값 타입도 마찬가지로 불변성을 유지해야 하므로 업데이트가 아니라 통째로 갈아끼운다.
+        // 기존 값을 지우고 다시 넣는다.
+        findMember.getFavoriteFoods().remove("치킨");
+        findMember.getFavoriteFoods().add("한식");
+
+        // 임베디드 타입과 컬렉션 값 타입을 영속화 하는 코드가 없지만 쿼리가 나간다.
+        // 영속성 전이와 고아 객체 제거 기능을 필수로 가지기 때문이다.
+
+        tx.commit();
+    }
+}
+```
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member1");
+        member.setHomeAddress(new Address("home city", "street", "12345"));
+
+        member.getFavoriteFoods().add("치킨");
+        member.getFavoriteFoods().add("족발");
+        member.getFavoriteFoods().add("피자");
+
+        member.getAddressHistory().add(new Address("old1", "street", "12345"));
+        member.getAddressHistory().add(new Address("old2", "street", "12345"));
+
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        Member findMember = em.find(Member.class, member.getId());
+
+        // address를 하나만 바꾸고 싶다면 지우고 싶은 값을 넣고 remove 한다.
+        // 컬렉션은 대부분 equals()를 사용해 찾고 싶은 값을 그대로 찾아준다.
+        // 따라서 equals()를 재정의 하지 않았다면 그냥 망하는 것이다. equals()를 꼭 재정의 해주자.
+        findMember.getAddressHistory().remove(new Address("old1", "street", "12345"));
+        // 지운 값 대신 새로운 값을 넣어준다.
+        findMember.getAddressHistory().add(new Address("new city", "street", "12345"));
+
+        tx.commit();
+    }
+}
+```
+
+### 제약 사항
+- 값타입 컬렉션을 매핑하는 테이블은 모든 컬럼을 묶어서 기본키를 구성해야 한다.
+  - null 이나 중복값은 저장되지 않는다.
+- 값 타입은 식별자 개념이 존재하지 않는다.
+  - 추적이 어렵다.
+- 값 타입 컬렉션에 변경 사항이 발생하면
+  - 주인 엔티티와 연관된 모든 데이터를 삭제하고
+  - 값 타입 컬렉션에 있는 현재 값을 모두 다시 저장한다.
+- 따라서 값 타입 컬렉션은 사용하지 않는것이 좋다.
+
+### 대안
+
+```java
+@Entity
+@Table(name = "ADDRESS")
+public class AddressEntity {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private Address address;
+}
+```
+
+```java
+@Entity
+public class Member {
+    ...
+
+    @OneToMany(cascade = ALL, orphanRemoval = true)
+    @JoinColumn(name = "MEMBER_ID")
+    private List<AddressEntity> addressHistory = new ArrayList<>();
+
+}
+```
+- 실무에서는 상황에 따라 일대다 관계로 풀어낸다.
+  - 일대다 관계를 위한 엔티티를 만들어 값 타입을 wrapping 한다.
+
+### 활용
+- 업데이트나 추적할 필요 없는 단순한 상황일 때만 사용하도록 하자.
+- 값을 변경할 일이 없더라도 쿼리 자체를 테이블에서 할 때가 많다면 엔티티로 하는게 좋다.
+
+## 실전예제-6
+
+```java
+@Embeddable
+@Getter
+@Setter
+public class Address {
+
+    private String city;
+    private String street;
+    private String zipcode;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Address address = (Address) o;
+        return Objects.equals(getCity(), address.getCity()) && Objects
+                .equals(getStreet(), address.getStreet()) && Objects
+                .equals(getZipcode(), address.getZipcode());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getCity(), getStreet(), getZipcode());
+    }
+}
+```
+
+```java
+@Entity
+public class Delivery {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Embedded
+    private Address address;
+
+    private DeliveryStatus status;
+
+    @OneToOne(mappedBy = "delivery", fetch = FetchType.LAZY)
+    private Order order;
+}
+```
+
+```java
+@Entity
+public class Member {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "member_id")
+    private Long id;
+    private String name;
+
+    @Embedded
+    private Address address;
+
+    @OneToMany(mappedBy = "member")
+    private List<Order> orders = new ArrayList<>();
+}
+```
+
+```java
+@Embeddable
+public class Address {
+
+    // 조건을 추가할 수 있다.
+    @Column(length = 10)
+    private String city;
+
+    @Column(length = 20)
+    private String street;
+
+    @Column(length = 5)
+    private String zipcode;
+
+    // 의미 있는 비즈니스 메서드를 만들 수 있다.
+    public String fullAddress() {
+        return getCity() + getStreet() + getZipcode();
+    }
 }
 ```
