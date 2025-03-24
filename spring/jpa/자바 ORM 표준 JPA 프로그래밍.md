@@ -1,175 +1,6 @@
 # JPA 자바 ORM 표준 프로그래밍
 
 ## 목차
-- [JPA 자바 ORM 표준 프로그래밍](#jpa-자바-orm-표준-프로그래밍)
-  - [목차](#목차)
-- [JPA 시작하기](#jpa-시작하기)
-  - [Dialect; 방언](#dialect-방언)
-  - [애플리케이션 개발](#애플리케이션-개발)
-      - [JPA 구동방식](#jpa-구동방식)
-    - [회원 생성](#회원-생성)
-    - [회원 수정](#회원-수정)
-  - [주의 할 점](#주의-할-점)
-  - [JPQL](#jpql)
-- [영속성 관리](#영속성-관리)
-  - [영속성 컨텍스트](#영속성-컨텍스트)
-    - [엔티티 생명주기](#엔티티-생명주기)
-    - [영속성 컨텍스트의 이점](#영속성-컨텍스트의-이점)
-      - [1차 캐시](#1차-캐시)
-      - [동일성 보장](#동일성-보장)
-      - [트랜잭션을 지원하는 쓰기 지연](#트랜잭션을-지원하는-쓰기-지연)
-      - [변경 감지(더티 체킹)](#변경-감지더티-체킹)
-  - [플러시](#플러시)
-    - [영속성 컨텍스트를 플러시 하는 방법](#영속성-컨텍스트를-플러시-하는-방법)
-  - [준영속 상태](#준영속-상태)
-    - [준영속 상태로 만드는 법](#준영속-상태로-만드는-법)
-- [Entity 매핑](#entity-매핑)
-  - [객체와 테이블 매핑](#객체와-테이블-매핑)
-    - [@Entity](#entity)
-      - [name 속성](#name-속성)
-    - [@Table](#table)
-      - [name 속성](#name-속성-1)
-      - [catalog 속성](#catalog-속성)
-      - [schema 속성](#schema-속성)
-  - [데이터베이스 스키마 자동 생성](#데이터베이스-스키마-자동-생성)
-    - [주의사항](#주의사항)
-  - [DDL 생성 기능](#ddl-생성-기능)
-    - [제약 조건 추가](#제약-조건-추가)
-    - [유니크 제약 조건 추가](#유니크-제약-조건-추가)
-  - [필드와 컬럼 매핑](#필드와-컬럼-매핑)
-    - [@Column](#column)
-    - [@Enumerated](#enumerated)
-    - [@Temporal](#temporal)
-    - [@Lob](#lob)
-    - [@Transient](#transient)
-  - [기본 키 매핑](#기본-키-매핑)
-    - [직접 할당](#직접-할당)
-    - [자동 생성](#자동-생성)
-      - [IDENTITY](#identity)
-      - [SEQUENCE](#sequence)
-      - [Table](#table-1)
-    - [권장하는 식별자 전략](#권장하는-식별자-전략)
-  - [실전 예제-1](#실전-예제-1)
-    - [테이블 설계](#테이블-설계)
-    - [엔티티 설계와 매핑](#엔티티-설계와-매핑)
-    - [데이터 중심 설계의 문제점](#데이터-중심-설계의-문제점)
-- [연관 관계 매핑](#연관-관계-매핑)
-  - [예제 시나리오](#예제-시나리오)
-  - [단방향 연관 관계](#단방향-연관-관계)
-      - [엔티티 정의](#엔티티-정의)
-      - [엔티티 저장 및 조회](#엔티티-저장-및-조회)
-    - [연관 관계 수정](#연관-관계-수정)
-  - [양방향 연관 관계](#양방향-연관-관계)
-      - [정의](#정의)
-      - [Team](#team)
-    - [연관 관계의 주인과 mappedBy](#연관-관계의-주인과-mappedby)
-    - [연관 관계의 주인](#연관-관계의-주인)
-    - [주인을 결정하는 기준](#주인을-결정하는-기준)
-    - [Tip](#tip)
-    - [정리](#정리)
-  - [실전 예제-2](#실전-예제-2)
-    - [단방향 연관관계 설정](#단방향-연관관계-설정)
-    - [양방향 연관관계 설정](#양방향-연관관계-설정)
-- [다양한 연관 관계 매핑](#다양한-연관-관계-매핑)
-  - [다대일](#다대일)
-    - [단방향](#단방향)
-    - [양방향](#양방향)
-  - [일대다](#일대다)
-    - [단방향](#단방향-1)
-    - [정리](#정리-1)
-    - [양방향](#양방향-1)
-  - [일대일](#일대일)
-    - [주 테이블 외래키 단방향](#주-테이블-외래키-단방향)
-      - [Member](#member)
-      - [Locker](#locker)
-    - [주 테이블 외래키 양방향](#주-테이블-외래키-양방향)
-      - [Member](#member-1)
-      - [Locker](#locker-1)
-    - [대상 테이블 외래키 단방향](#대상-테이블-외래키-단방향)
-    - [대상 테이블 외래키 양방향](#대상-테이블-외래키-양방향)
-    - [정리](#정리-2)
-      - [주 테이블에 외래키를 두는 방법](#주-테이블에-외래키를-두는-방법)
-      - [대상 테이블에 외래키를 두는 방법](#대상-테이블에-외래키를-두는-방법)
-  - [다대다](#다대다)
-  - [실전 예제-3](#실전-예제-3)
-    - [Entity](#entity-1)
-    - [ERD](#erd)
-    - [연관 관계 구현](#연관-관계-구현)
-      - [Delivery](#delivery)
-      - [Category](#category)
-      - [Item](#item)
-      - [Order](#order)
-    - [@JoinColumn](#joincolumn)
-    - [@ManyToOne](#manytoone)
-    - [@OneToMany](#onetomany)
-- [고급 매핑](#고급-매핑)
-  - [상속 관계 매핑 정의](#상속-관계-매핑-정의)
-  - [주요 애너테이션](#주요-애너테이션)
-    - [@Inheritance](#inheritance)
-    - [@DiscriminatorColumn](#discriminatorcolumn)
-    - [@DiscriminatorValue](#discriminatorvalue)
-  - [상속 관계 매핑](#상속-관계-매핑)
-    - [조인 전략](#조인-전략)
-      - [장점](#장점)
-      - [단점](#단점)
-    - [단일 테이블 전략](#단일-테이블-전략)
-      - [장점](#장점-1)
-      - [단점](#단점-1)
-    - [구현 클래스 마다 단일 테이블 전략](#구현-클래스-마다-단일-테이블-전략)
-      - [장점](#장점-2)
-      - [단점](#단점-2)
-    - [정리](#정리-3)
-  - [매핑 정보 상속](#매핑-정보-상속)
-    - [특징](#특징)
-  - [실전 예제-4](#실전-예제-4)
-      - [Item](#item-1)
-- [프록시와 연관 관계](#프록시와-연관-관계)
-  - [프록시](#프록시)
-    - [프록시 기초](#프록시-기초)
-    - [프록시 특징](#프록시-특징)
-    - [프록시 객체의 초기화](#프록시-객체의-초기화)
-    - [주의 사항](#주의-사항)
-    - [준영속 상태의 프록시](#준영속-상태의-프록시)
-    - [프록시 유틸리티 메서드](#프록시-유틸리티-메서드)
-  - [즉시 로딩과 지연 로딩](#즉시-로딩과-지연-로딩)
-    - [지연 로딩](#지연-로딩)
-    - [즉시 로딩](#즉시-로딩)
-    - [fetch join](#fetch-join)
-  - [영속성 전이와 고아 객체](#영속성-전이와-고아-객체)
-    - [영속성 전이](#영속성-전이)
-    - [고아 객체 제거](#고아-객체-제거)
-      - [orphanRemoval = true](#orphanremoval--true)
-      - [CascadeType.REMOVE](#cascadetyperemove)
-      - [`CascadeType.ALL`과 `orphanRemoval = true` 동시 사용](#cascadetypeall과-orphanremoval--true-동시-사용)
-  - [실전 예제-5](#실전-예제-5)
-    - [글로벌 fetch 전략 설정](#글로벌-fetch-전략-설정)
-- [값 타입](#값-타입)
-  - [기본 값 타입](#기본-값-타입)
-    - [참고](#참고)
-  - [임베디드 타입](#임베디드-타입)
-    - [사용법](#사용법)
-    - [특징](#특징-1)
-    - [임베디드 타입과 테이블 매핑](#임베디드-타입과-테이블-매핑)
-    - [임베디드 타입과 연관 관계](#임베디드-타입과-연관-관계)
-    - [@AttributeOverride](#attributeoverride)
-    - [임베디드 타입과 null](#임베디드-타입과-null)
-  - [값 타입과 불변 객체](#값-타입과-불변-객체)
-    - [객체 타입의 한계](#객체-타입의-한계)
-    - [불변 객체](#불변-객체)
-  - [값 타입의 비교](#값-타입의-비교)
-    - [동일성 비교](#동일성-비교)
-    - [동등성 비교](#동등성-비교)
-  - [값 타입 컬렉션](#값-타입-컬렉션)
-    - [@ElementCollection, @CollectionTable](#elementcollection-collectiontable)
-    - [값 타입 저장](#값-타입-저장)
-    - [값 타입 조회](#값-타입-조회)
-    - [값 타입 수정](#값-타입-수정)
-    - [제약 사항](#제약-사항)
-    - [대안](#대안)
-    - [활용](#활용)
-  - [실전예제-6](#실전예제-6)
-
-
 
 
 # JPA 시작하기
@@ -2953,3 +2784,631 @@ public class Address {
     }
 }
 ```
+
+# 객체 지향 쿼리 언어
+
+## 기본 문법과 쿼리 api
+
+### JPQL
+- 객체 지향 쿼리 언어
+  - 테이블이 아니라 엔티티 객체를 대상으로 쿼리한다.
+- SQL을 추상화하여 특정 sql에 의존하지 않는다.
+- 매핑 정보를 조합해 최종적으로 sql로 변환되어 실행된다.
+
+### 문법
+
+![](/assets/문법.png)
+
+`select m from Member as m where m.age > 18`
+- 엔티티와 속성은 대소문자를 구분한다.
+- JPQL 키워드는 대소문자를 구분하지 않는다.
+- 테이블 이름이 아닌 엔티티 이름을 사용해야 한다.
+  - `@Entity(name= "")`값으로 설정된다.
+  - 기본 값은 클래스명과 같다.
+- 별칭은 필수로 사용해야 한다.
+
+### 집합과 정렬
+![](/assets/집합과정렬.png)
+`group by`, `having`등도 똑같이 사용하면 된다.
+
+### TypeQuery, Query 타입
+
+#### TypeQuery
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        TypedQuery<Member> a = em.createQuery("select m from Member m", Member.class);
+        TypedQuery<String> b = em.createQuery("select m.username from Member m", String.class);
+    }
+}
+```
+- 반환 타입이 명확할 때 사용한다.
+
+#### Query
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        // username과 age는 타입이 달라서 명시할 수 없으므로 Query 타입을 사용한다.
+        Query a = em.createQuery("select m.username, m.age from Member m");
+    }
+}
+```
+- 반환 타입이 명확하지 않을 때 사용한다.
+
+### 결과 조회 api
+
+#### query.getResultList()
+- 결과가 하나 이상일 때 리스트를 반환한다.
+- 결과가 없으면 빈 리스트를 반환한다.
+
+#### query.getSingleResult()
+- 결과가 정확히 하나일 때 단일 객체를 반환한다.
+
+### 파라미터 바인딩
+
+#### 이름 기준
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member singleResult = em
+                .createQuery("SELECT m FROM Member m where m.username=:username", Member.class)
+                .setParameter("username", "member1");
+
+        System.out.println(singleResult.getUserName());
+    }
+}
+```
+- 이름으로 지정하여 가져오기 때문에 실수 발생x
+
+#### 위치 기준
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        TypedQuery<Member> query = em
+                .createQuery("SELECT m FROM Member m where m.username=?1", Member.class);
+
+        query.setParameter(1, usernameParam);
+    }
+}
+```
+- db는 계속 변화하니까 위치가 순서가 바뀔수도 있음. 사용하지 말자.
+
+## 프로젝션
+- select절에 조회할 대상을 지정하는 것
+- 엔티티, 임베디드 타입, 스칼라타입이 대상이다.
+- `distinct`를 붙여 중복 제거가 가능하다.
+
+### 엔티티 프로젝션
+```java
+select m from Member m
+select m.team from Member m
+```
+- `m`이 멤버 엔티티의 alias이므로 엔티티 프로젝션이다.
+- `m.team`도 결과가 `team`엔티티 이므로 엔티티 프로젝션에 해당한다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member");
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        // Entity 프로젝션으로 조회한 데이터는 영속성 컨텍스트에서 관리된다.
+        List<Member> result = em.createQuery("select m from Member m", Member.class).getResultList();
+
+        Member findMember = result.get(0);
+        // 영속성 컨텍스트에서 관리되기 때문에 update 쿼리가 나간다.
+        findMember.setAge(30);
+
+        tx.commit();
+    }
+}
+```
+- 엔티티 프로젝션을 진행하면 select에 들어가는 모든 데이터가 영속성 컨텍스트로 관리된다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member");
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        List<Team> result = em.createQuery("select m.team from Member m", Team.class).getResultList();
+
+        tx.commit();
+    }
+}
+```
+
+### 임베디드 타입 프로젝션
+`select m.address from Member m`
+- `address`와 같은 임베디드 타입도 프로젝션이 가능하다.
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member");
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        // 임베디드 타입 조회
+        em.createQuery("select o.address from Order o", Address.class).getResultList();
+
+        tx.commit();
+    }
+}
+```
+
+### 스칼라 타입 프로젝션
+`select m.username, m.age from Member m`
+- String, int 등의 기본 데이터 타입이 해당한다.
+
+### 여러 값 조회
+```java
+select m.username, m.age
+from Member m
+```
+- 조회하는 데이터들의 타입이 다르거나 여러 개를 가져와야 할 때는 3가지 방법을 사용 할 수 있다.
+
+#### Query 타입으로 조회
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        // String과 int 값을 반환한다.
+        Query query = em.createQuery("select m.username, m.age from Member m");
+    }
+}
+```
+
+#### Object[] 타입으로 조회
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member");
+        member.setAge(30);
+        em.persist(member);
+
+        List resultList = em.createQuery("select m.username, m.age from Member m")
+                .getResultList();
+
+        Object o = resultList.get(0);
+        Object[] result = (Object[]) o;
+
+        System.out.println("result = " + result[0]);
+        System.out.println("result = " + result[1]);
+    }
+}
+```
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member");
+        member.setAge(30);
+        em.persist(member);
+
+        List<Object[]> resultList = em.createQuery("select m.username, m.age from Member m")
+                .getResultList();
+        Object[] result = resultList.get(0);
+
+        System.out.println("result = " + result[0]);
+        System.out.println("result = " + result[1]);
+    }
+}
+```
+- 두번째와 같이 제네릭을 사용할 수 도있다.
+
+#### new 명령어로 조회
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Member member = new Member();
+        member.setUsername("member");
+        member.setAge(30);
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        // 단순 값을 DTO로 바로 가져올 수도 있다.
+        List<MemberDto> resultList = em
+                // 패키지명.생성자로 불러온다.
+                .createQuery("select new jpql.MemberDto(m.username, m.age) from Member m",
+                        MemberDto.class).getResultList();
+
+        MemberDto memberDto = resultList.get(0);
+
+        System.out.println("result = " + memberDto.getUsername());
+        System.out.println("result = " + memberDto.getAge());
+
+        tx.commit();
+    }
+}
+```
+```java
+public class MemberDto {
+    private String username;
+    private int age;
+
+    // 생성자의 순서와 타입이 일치해야 가져올 수 있다.
+    public MemberDto(String username, int age) {
+        this.username = username;
+        this.age = age;
+    }
+}
+```
+- 엔티티가 아닌 타입에 생성자로 매핑해서 가져오는 방법
+- 순서와 타입이 일치하는 생성자가 필요하다
+- `패키지명.클래스명`으로 가져오기 때문에 패키지명이 길수록 사용이 힘들다는 단점 존재.
+
+## 페이징
+
+### setFirstResult()
+- 조회 시작 위치
+- 0부터 시작한다.
+- `setFirstResult(int startPosition)`
+
+### setMaxResults()
+- 조회할 데이터 수
+- setMaxResults(int maxResult)
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        List<Member> resultList = em
+                // order by를 해봐야 페이징이 잘 되는지 확인할 수 있다.
+                .createQuery("select m from Member m order by m.age desc", Member.class)
+                .setFirstResult(1).setMaxResults(10).getResultList();
+    }
+}
+```
+
+## 조인
+
+### 내부 조인
+```java
+SELECT m
+FROM Member m [INNER] JOIN m.team t
+```
+- team 데이터가 없다면 출력x
+- 괄호 안의 키워드는 생략 가능
+
+### 외부 조인
+```java
+SELECT m
+FROM Member m LEFT [OUTER] JOIN m.team t
+```
+- 데이터가 없어도 null로 모두 출력.
+
+### 세타 조인
+```java
+select count(m)
+from Member m,
+     Team t
+where m.username = t.name
+```
+
+### ON절
+- 조인할 대상을 미리 필터링 가능하다.
+- 연관 관계가 없는 엔티티도 외부 조회가 가능ㅎ다ㅏ.
+
+#### 조인 대상 필터링
+`SELECT m, t FROM Member m LEFT JOIN m.team t on t.name = 'A'`
+- 회원과 팀을 대상으로 팀 이름이 A인 팀만 조인한다.
+- 실제 나가는 sql
+```sql
+SELECT m.*, t.*
+FROM Member m
+         LEFT JOIN Team t ON m.TEAM_ID = t.id and t.name = 'A'
+```
+
+#### 연관 관계 없는 엔티티 외부 조인
+`SELECT m, t FROM Member m LEFT JOIN Team t on m.username = t.name`
+- 실제 나가는 sql
+```sql
+SELECT m.*, t.*
+FROM Member m
+         LEFT JOIN Team t ON m.username = t.name
+```
+
+## 서브 쿼리
+- 쿼리 안에 서브로 넣는 쿼리
+```sql
+select m
+from Member m
+where m.age > (select avg(m2.age) from Member m2)
+```
+
+### 서브 쿼리 지원 함수
+#### [NOT] EXIST + SUBQUERY
+- { ALL | ANY | SOME } + SUBQUERY
+- ALL
+  - 모두 만족하면 참
+- ANY, SOME
+  - 조건을 하나라도 만족하면 참
+  - 둘은 같은 의미다.
+
+```sql
+select m
+from Member m
+where exists(select t from m.team t where t.name = '팀A')
+```
+- 팀 A 소속인 회원
+
+```sql
+select o
+from Order o
+where o.orderAmount > ALL (select p.stockAmount from Product p)
+```
+- 전체 상품 각각의 재고보다 주문량이 많은 주문들
+
+```sql
+select m
+from Member m
+where m.team = ANY (select t from Team t)
+```
+- 어떤 팀이든 팀에 소속된 회원
+
+#### [NOT] IN + SUBQUERY
+- 서브 쿼리의 결과 중 하나라도 같은 것이 있으면 참이다.
+
+### 한계
+- JPA는 where, having 절에서만 서브 쿼리를 사용할 수 있다.
+- 구현체인 하이버네이트는 select 절에서도 사용할 수 있다.
+
+```sql
+select mm.age, mm.username
+from (select m.age, m.username from Member m) as mm
+```
+- 위처럼 from 절의 서브 쿼리는 JPQL에서 불가능하다.
+  - join으로 풀 수 있으면 join으로 해결하는 게 최선이다.
+  - 꼭 from을 써야겠다면 네이티브 SQL을 써야 한다.
+  - 하지만 애플리케이션 단에서 정리하거나, 쿼리를 각각 날려서 조합하는 식으로 해결하는 걸 추천한다.
+
+## JPQL 타입 표현과 기타식
+
+### ENUM
+```sql
+select m.username, 'hello', true
+from Member m
+where m.type = jpql.MemberType.ADMIN
+```
+```java
+class JpaMain {
+    public static void main(String[] args) {
+        String query = "select m.username, 'hello', true from Member m " +
+                // 특정 enum 타입 조회
+                "where m.type = jpql.MemberType.USER";
+
+        List<Object[]> result = em.createQuery(query)
+                .getResulstList();
+
+        for (Object[] objects : result) {
+            System.out.println("objects " + objects[0]);
+            System.out.println("objects " + objects[1]);
+            System.out.println("objects " + objects[2]);
+        }
+    }
+}
+```
+```
+object = teamA
+// 그냥 이렇게 입력한 문자를 그대로 뽑을 수도 있다.
+object = hello
+object = true
+```
+```java
+class JpaMain {
+    public static void main(String[] args) {
+        String query = "select m.username, 'hello', true from Member m " +
+                // 패키지 이름이 너무 길면 이렇게 표현할 수 있다.
+                "where m.type = :userType";
+
+
+        List<Object[]> result = em.createQuery(query)
+                // userType에 원하는 enum을 세팅한다.
+                .setParameter("userType", MemberType.ADMIN)
+                .getResulstList();
+
+        for (Object[] objects : result) {
+            System.out.println("objects " + objects[0]);
+            System.out.println("objects " + objects[1]);
+            System.out.println("objects " + objects[2]);
+        }
+    }
+}
+```
+
+## 조건식
+
+### 기본 조건식
+```sql
+select case
+           when m.age <= 10 then '학생요금'
+           when m.age >= 60 then '경로요금'
+           else '일반요금'
+           end
+from Member m
+```
+- 쿼리에 조건 지정이 가능하다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+
+        Member member = new Member();
+        member.setName("member");
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        String query = "select\n"
+                + "case when m.age <= 10 then '학생요금' when m.age >= 60 then '경로요금'\n"
+                + "else '일반요금'\n"
+                + "end\n"
+                + "from Member m";
+
+        List<String> result = em.createQuery(query, String.class).getResultList();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+        tx.commit();
+    }
+}
+```
+
+### 단순 조건식
+```java
+select case t.name
+           when '팀A' then '인센티브110%'
+           when '팀B' then '인센티브120%'
+           else '인센티브105%'
+           end
+from Team t
+```
+- 정확하게 매칭하여 쿼리를 뽑아내는 단순한 식이다.
+
+### COALESCE
+```sql
+select coalesce(m.username, '이름 없는 회원')
+from Member m
+```
+- 사용자 이름이 없다면 `이름 없는 회원`출력
+- 하나씩 조회하여 null이 아니라면 그 값을 반환한다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+
+        Member member = new Member();
+        // 이름을 세팅한다.
+        member.setName("member");
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        String query = "select coalesce(m.name, '이름 없는 회원')\n"
+                + "from Member m";
+
+        List<String> result = em.createQuery(query, String.class).getResultList();
+
+        // 이름이 있으니 해당 이름이 잘 나온다.
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+        tx.commit();
+    }
+}
+```
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+
+        Member member = new Member();
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        String query = "select coalesce(m.name, '이름 없는 회원')\n"
+                + "from Member m";
+
+        List<String> result = em.createQuery(query, String.class).getResultList();
+
+        // 이름을 세팅하지 않았으니 '이름 없는 회원'으로 출력된다.
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+        tx.commit();
+    }
+}
+```
+
+### NULLIF
+```sql
+select NULLIF(m.username, '관리자')
+from Member m
+```
+- `m.username`과 `관리자`가 같으면 null 반환.
+- 다르다면 첫 번째 값을 반환한다.
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+
+        Member member = new Member();
+        // m.username과 관리자가 같은 값이므로
+        member.setName("관리자");
+        em.persist(member);
+
+        em.flush();
+        em.clear();
+
+        String query = "select NULLIF(m.name, '관리자')\n"
+                + "from Member m";
+
+        List<String> result = em.createQuery(query, String.class).getResultList();
+
+        // null을 반환한다.
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+        tx.commit();
+    }
+}
+```
+
+## JQPL 함수
+
+### 기본함수
+- 기본스펙에 정의.
+  - DB에 종속적이지 않다.
+- CONCAT
+- SUBSTRING
+- TRIM
+- LOWER, UPPER
+- LENGTH
+- LOCATE
+- ABS, SQRT, MOD
+- SIZE, INDEX
+
+### 사용자 정의 함수
+```SQL
+select function('group_concat', i.name)
+from Item i
+```
+- 기본 함수로 해결할 수 없을 때 사용.
+- 하이버네이트는 사용 전에 방언을 추가해주어야한다.
+
