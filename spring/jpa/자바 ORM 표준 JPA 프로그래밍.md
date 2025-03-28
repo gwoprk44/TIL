@@ -1,6 +1,254 @@
 # JPA 자바 ORM 표준 프로그래밍
 
 ## 목차
+- [JPA 자바 ORM 표준 프로그래밍](#jpa-자바-orm-표준-프로그래밍)
+  - [목차](#목차)
+- [JPA 시작하기](#jpa-시작하기)
+  - [Dialect; 방언](#dialect-방언)
+  - [애플리케이션 개발](#애플리케이션-개발)
+      - [JPA 구동방식](#jpa-구동방식)
+    - [회원 생성](#회원-생성)
+    - [회원 수정](#회원-수정)
+  - [주의 할 점](#주의-할-점)
+  - [JPQL](#jpql)
+- [영속성 관리](#영속성-관리)
+  - [영속성 컨텍스트](#영속성-컨텍스트)
+    - [엔티티 생명주기](#엔티티-생명주기)
+    - [영속성 컨텍스트의 이점](#영속성-컨텍스트의-이점)
+      - [1차 캐시](#1차-캐시)
+      - [동일성 보장](#동일성-보장)
+      - [트랜잭션을 지원하는 쓰기 지연](#트랜잭션을-지원하는-쓰기-지연)
+      - [변경 감지(더티 체킹)](#변경-감지더티-체킹)
+  - [플러시](#플러시)
+    - [영속성 컨텍스트를 플러시 하는 방법](#영속성-컨텍스트를-플러시-하는-방법)
+  - [준영속 상태](#준영속-상태)
+    - [준영속 상태로 만드는 법](#준영속-상태로-만드는-법)
+- [Entity 매핑](#entity-매핑)
+  - [객체와 테이블 매핑](#객체와-테이블-매핑)
+    - [@Entity](#entity)
+      - [name 속성](#name-속성)
+    - [@Table](#table)
+      - [name 속성](#name-속성-1)
+      - [catalog 속성](#catalog-속성)
+      - [schema 속성](#schema-속성)
+  - [데이터베이스 스키마 자동 생성](#데이터베이스-스키마-자동-생성)
+    - [주의사항](#주의사항)
+  - [DDL 생성 기능](#ddl-생성-기능)
+    - [제약 조건 추가](#제약-조건-추가)
+    - [유니크 제약 조건 추가](#유니크-제약-조건-추가)
+  - [필드와 컬럼 매핑](#필드와-컬럼-매핑)
+    - [@Column](#column)
+    - [@Enumerated](#enumerated)
+    - [@Temporal](#temporal)
+    - [@Lob](#lob)
+    - [@Transient](#transient)
+  - [기본 키 매핑](#기본-키-매핑)
+    - [직접 할당](#직접-할당)
+    - [자동 생성](#자동-생성)
+      - [IDENTITY](#identity)
+      - [SEQUENCE](#sequence)
+      - [Table](#table-1)
+    - [권장하는 식별자 전략](#권장하는-식별자-전략)
+  - [실전 예제-1](#실전-예제-1)
+    - [테이블 설계](#테이블-설계)
+    - [엔티티 설계와 매핑](#엔티티-설계와-매핑)
+    - [데이터 중심 설계의 문제점](#데이터-중심-설계의-문제점)
+- [연관 관계 매핑](#연관-관계-매핑)
+  - [예제 시나리오](#예제-시나리오)
+  - [단방향 연관 관계](#단방향-연관-관계)
+      - [엔티티 정의](#엔티티-정의)
+      - [엔티티 저장 및 조회](#엔티티-저장-및-조회)
+    - [연관 관계 수정](#연관-관계-수정)
+  - [양방향 연관 관계](#양방향-연관-관계)
+      - [정의](#정의)
+      - [Team](#team)
+    - [연관 관계의 주인과 mappedBy](#연관-관계의-주인과-mappedby)
+    - [연관 관계의 주인](#연관-관계의-주인)
+    - [주인을 결정하는 기준](#주인을-결정하는-기준)
+    - [Tip](#tip)
+    - [정리](#정리)
+  - [실전 예제-2](#실전-예제-2)
+    - [단방향 연관관계 설정](#단방향-연관관계-설정)
+    - [양방향 연관관계 설정](#양방향-연관관계-설정)
+- [다양한 연관 관계 매핑](#다양한-연관-관계-매핑)
+  - [다대일](#다대일)
+    - [단방향](#단방향)
+    - [양방향](#양방향)
+  - [일대다](#일대다)
+    - [단방향](#단방향-1)
+    - [정리](#정리-1)
+    - [양방향](#양방향-1)
+  - [일대일](#일대일)
+    - [주 테이블 외래키 단방향](#주-테이블-외래키-단방향)
+      - [Member](#member)
+      - [Locker](#locker)
+    - [주 테이블 외래키 양방향](#주-테이블-외래키-양방향)
+      - [Member](#member-1)
+      - [Locker](#locker-1)
+    - [대상 테이블 외래키 단방향](#대상-테이블-외래키-단방향)
+    - [대상 테이블 외래키 양방향](#대상-테이블-외래키-양방향)
+    - [정리](#정리-2)
+      - [주 테이블에 외래키를 두는 방법](#주-테이블에-외래키를-두는-방법)
+      - [대상 테이블에 외래키를 두는 방법](#대상-테이블에-외래키를-두는-방법)
+  - [다대다](#다대다)
+  - [실전 예제-3](#실전-예제-3)
+    - [Entity](#entity-1)
+    - [ERD](#erd)
+    - [연관 관계 구현](#연관-관계-구현)
+      - [Delivery](#delivery)
+      - [Category](#category)
+      - [Item](#item)
+      - [Order](#order)
+    - [@JoinColumn](#joincolumn)
+    - [@ManyToOne](#manytoone)
+    - [@OneToMany](#onetomany)
+- [고급 매핑](#고급-매핑)
+  - [상속 관계 매핑 정의](#상속-관계-매핑-정의)
+  - [주요 애너테이션](#주요-애너테이션)
+    - [@Inheritance](#inheritance)
+    - [@DiscriminatorColumn](#discriminatorcolumn)
+    - [@DiscriminatorValue](#discriminatorvalue)
+  - [상속 관계 매핑](#상속-관계-매핑)
+    - [조인 전략](#조인-전략)
+      - [장점](#장점)
+      - [단점](#단점)
+    - [단일 테이블 전략](#단일-테이블-전략)
+      - [장점](#장점-1)
+      - [단점](#단점-1)
+    - [구현 클래스 마다 단일 테이블 전략](#구현-클래스-마다-단일-테이블-전략)
+      - [장점](#장점-2)
+      - [단점](#단점-2)
+    - [정리](#정리-3)
+  - [매핑 정보 상속](#매핑-정보-상속)
+    - [특징](#특징)
+  - [실전 예제-4](#실전-예제-4)
+      - [Item](#item-1)
+- [프록시와 연관 관계](#프록시와-연관-관계)
+  - [프록시](#프록시)
+    - [프록시 기초](#프록시-기초)
+    - [프록시 특징](#프록시-특징)
+    - [프록시 객체의 초기화](#프록시-객체의-초기화)
+    - [주의 사항](#주의-사항)
+    - [준영속 상태의 프록시](#준영속-상태의-프록시)
+    - [프록시 유틸리티 메서드](#프록시-유틸리티-메서드)
+  - [즉시 로딩과 지연 로딩](#즉시-로딩과-지연-로딩)
+    - [지연 로딩](#지연-로딩)
+    - [즉시 로딩](#즉시-로딩)
+    - [fetch join](#fetch-join)
+  - [영속성 전이와 고아 객체](#영속성-전이와-고아-객체)
+    - [영속성 전이](#영속성-전이)
+    - [고아 객체 제거](#고아-객체-제거)
+      - [orphanRemoval = true](#orphanremoval--true)
+      - [CascadeType.REMOVE](#cascadetyperemove)
+      - [`CascadeType.ALL`과 `orphanRemoval = true` 동시 사용](#cascadetypeall과-orphanremoval--true-동시-사용)
+  - [실전 예제-5](#실전-예제-5)
+    - [글로벌 fetch 전략 설정](#글로벌-fetch-전략-설정)
+- [값 타입](#값-타입)
+  - [기본 값 타입](#기본-값-타입)
+    - [참고](#참고)
+  - [임베디드 타입](#임베디드-타입)
+    - [사용법](#사용법)
+    - [특징](#특징-1)
+    - [임베디드 타입과 테이블 매핑](#임베디드-타입과-테이블-매핑)
+    - [임베디드 타입과 연관 관계](#임베디드-타입과-연관-관계)
+    - [@AttributeOverride](#attributeoverride)
+    - [임베디드 타입과 null](#임베디드-타입과-null)
+  - [값 타입과 불변 객체](#값-타입과-불변-객체)
+    - [객체 타입의 한계](#객체-타입의-한계)
+    - [불변 객체](#불변-객체)
+  - [값 타입의 비교](#값-타입의-비교)
+    - [동일성 비교](#동일성-비교)
+    - [동등성 비교](#동등성-비교)
+  - [값 타입 컬렉션](#값-타입-컬렉션)
+    - [@ElementCollection, @CollectionTable](#elementcollection-collectiontable)
+    - [값 타입 저장](#값-타입-저장)
+    - [값 타입 조회](#값-타입-조회)
+    - [값 타입 수정](#값-타입-수정)
+    - [제약 사항](#제약-사항)
+    - [대안](#대안)
+    - [활용](#활용)
+  - [실전예제-6](#실전예제-6)
+- [객체 지향 쿼리 언어 - 기본](#객체-지향-쿼리-언어---기본)
+  - [기본 문법과 쿼리 api](#기본-문법과-쿼리-api)
+    - [JPQL](#jpql-1)
+    - [문법](#문법)
+    - [집합과 정렬](#집합과-정렬)
+    - [TypeQuery, Query 타입](#typequery-query-타입)
+      - [TypeQuery](#typequery)
+      - [Query](#query)
+    - [결과 조회 api](#결과-조회-api)
+      - [query.getResultList()](#querygetresultlist)
+      - [query.getSingleResult()](#querygetsingleresult)
+    - [파라미터 바인딩](#파라미터-바인딩)
+      - [이름 기준](#이름-기준)
+      - [위치 기준](#위치-기준)
+  - [프로젝션](#프로젝션)
+    - [엔티티 프로젝션](#엔티티-프로젝션)
+    - [임베디드 타입 프로젝션](#임베디드-타입-프로젝션)
+    - [스칼라 타입 프로젝션](#스칼라-타입-프로젝션)
+    - [여러 값 조회](#여러-값-조회)
+      - [Query 타입으로 조회](#query-타입으로-조회)
+      - [Object\[\] 타입으로 조회](#object-타입으로-조회)
+      - [new 명령어로 조회](#new-명령어로-조회)
+  - [페이징](#페이징)
+    - [setFirstResult()](#setfirstresult)
+    - [setMaxResults()](#setmaxresults)
+  - [조인](#조인)
+    - [내부 조인](#내부-조인)
+    - [외부 조인](#외부-조인)
+    - [세타 조인](#세타-조인)
+    - [ON절](#on절)
+      - [조인 대상 필터링](#조인-대상-필터링)
+      - [연관 관계 없는 엔티티 외부 조인](#연관-관계-없는-엔티티-외부-조인)
+  - [서브 쿼리](#서브-쿼리)
+    - [서브 쿼리 지원 함수](#서브-쿼리-지원-함수)
+      - [\[NOT\] EXIST + SUBQUERY](#not-exist--subquery)
+      - [\[NOT\] IN + SUBQUERY](#not-in--subquery)
+    - [한계](#한계)
+  - [JPQL 타입 표현과 기타식](#jpql-타입-표현과-기타식)
+    - [ENUM](#enum)
+  - [조건식](#조건식)
+    - [기본 조건식](#기본-조건식)
+    - [단순 조건식](#단순-조건식)
+    - [COALESCE](#coalesce)
+    - [NULLIF](#nullif)
+  - [JQPL 함수](#jqpl-함수)
+    - [기본함수](#기본함수)
+    - [사용자 정의 함수](#사용자-정의-함수)
+- [객체 지향 쿼리 언어 - 중급](#객체-지향-쿼리-언어---중급)
+  - [경로 표현식](#경로-표현식)
+    - [상태 필드](#상태-필드)
+    - [연관 필드](#연관-필드)
+    - [단일 값 연관 필드](#단일-값-연관-필드)
+    - [컬렉션 값 연관 필드](#컬렉션-값-연관-필드)
+    - [명시적 조인](#명시적-조인)
+    - [경로 탐색을 통한 묵시적 조인 시 주의 사항](#경로-탐색을-통한-묵시적-조인-시-주의-사항)
+  - [fetch join](#fetch-join-1)
+    - [단일 값 fetch join](#단일-값-fetch-join)
+    - [일반 join 예제](#일반-join-예제)
+    - [fetch join 예제](#fetch-join-예제)
+    - [컬렉션 fetch join](#컬렉션-fetch-join)
+    - [fetch join과 DISTINCT](#fetch-join과-distinct)
+    - [일반 join과의 차이](#일반-join과의-차이)
+      - [일반 join](#일반-join)
+      - [fetch join](#fetch-join-2)
+    - [한계](#한계-1)
+    - [@BatchSize](#batchsize)
+    - [fetch join의 특징](#fetch-join의-특징)
+  - [다형성 쿼리](#다형성-쿼리)
+    - [조회 대상을 특정 자식으로 한정하기](#조회-대상을-특정-자식으로-한정하기)
+    - [TREAT](#treat)
+  - [엔티티 직접 사용](#엔티티-직접-사용)
+    - [기본키](#기본키)
+    - [외래 키](#외래-키)
+  - [Named 쿼리](#named-쿼리)
+    - [특징](#특징-2)
+    - [애너테이션에 정의](#애너테이션에-정의)
+    - [XML에 정의](#xml에-정의)
+  - [벌크 연산](#벌크-연산)
+    - [주의 사항](#주의-사항-1)
+    - [해결 방안](#해결-방안)
+
 
 
 # JPA 시작하기
@@ -2785,7 +3033,7 @@ public class Address {
 }
 ```
 
-# 객체 지향 쿼리 언어
+# 객체 지향 쿼리 언어 - 기본
 
 ## 기본 문법과 쿼리 api
 
@@ -3411,4 +3659,383 @@ from Item i
 ```
 - 기본 함수로 해결할 수 없을 때 사용.
 - 하이버네이트는 사용 전에 방언을 추가해주어야한다.
+
+# 객체 지향 쿼리 언어 - 중급
+
+## 경로 표현식
+
+![](/assets/경로표현식.png)
+
+- 점을 찍어 객체 그래프를 탐색
+- 상태 필드
+  - 객체가 가지고 있는 필드
+  - m.username
+- 단일 값 연관 필드
+  - 연관 관계를 맺은 것 중 단일 값인 필드
+  - m.team
+- 컬렉션 값 연관 필드
+  - 연관 관계를 맺은 것 중 컬렉션으로 된 필드
+  - m.orders
+
+어떤 필드냐에 따라 내부적 동작 방식과 결과가 다르므로 꼭 구분하자.
+
+### 상태 필드
+- 단순히 값을 저장하기 위한 필드
+- 경로 탐색의 끝 -> 더 이상 탐색x
+
+### 연관 필드
+- 연관 관계를 위한 필드
+
+### 단일 값 연관 필드
+- 대상이 엔티티일 때
+  - ManyToOne
+  - OneToOne
+- 탐색이 더 가능하다.
+- 묵시적 내부 조인이 발생한다.
+
+![](/assets/단일값.png)
+
+### 컬렉션 값 연관 필드
+- 대상이 컬렉션일 때
+  - OneToMany
+  - ManyToMany
+- 묵시적 내부 조인 발생
+- 탐색이 더 불가능
+- 명시적 조인을 통해 from 절에서 별칭을 얻으면 별칭으로 탐색 가능
+
+### 명시적 조인
+```java
+select m
+from Member m
+         join m.team t
+```
+- join 키워드를 직접 사용한다.
+
+### 경로 탐색을 통한 묵시적 조인 시 주의 사항
+```java
+select m.team
+from Member m
+```
+- 묵시적 내부 조인 발생
+  - 항상 내부 조인
+  - 외부 조인 필요시 명시적 조인 사용
+- 컬렉션은 탐색의 끝이므로 명시적 조인을 통한 별칭으로 획득.
+- 경로 탐색은 주로 select, where 절에서 사용하지만, 묵시적 조인으로 인해 sql의 from, join절에 영향을 미친다.
+
+## fetch join
+- sql 조인 종류x
+- JQPL에서 성능 튜닝을 위해 제공하는 전용 기능이다.
+- 연관된 엔티티나 컬렉션을 SQL 한방에 조회가 가능하다.
+
+![](/assets/fetch.png)
+-`select m`만 사용해도 회원을 조회하며 연관된 팀도 한번에 조회한다.
+- 즉시 로딩으로 가져오는 방법과 같다.
+
+### 단일 값 fetch join
+![](/assets/단일값fetch.png)
+- 회원 1,2는 팀 A
+- 회원3는 팀 B
+- 회원 4는 소속x
+
+![](/assets/단일값fetch2.png)
+- fetch join 이용 회원과 팀 한방에 조회
+- 총 5개의 엔티티를 1차 캐시에 저장한다.
+
+![](/assets/단일값fetch3.png)
+- 소속 팀이 없는 회원은 제외되는 이너 조인 발생.
+
+### 일반 join 예제
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        String jpql = "select m from Member m";
+        List<Member> members = em.createQuery(jpql, Member.class)
+                .getResultList();
+
+        for (Member member : members) {
+            System.out.println("member = " + member.getUsername() + ", "
+                    + "teamName = " + member.getTeam().name());
+        }
+    }
+}
+```
+- 연관 관계에 있는 team이 프록시로 들어왔다가, getTeam().getName() 을 호출할 때 지연 로딩으로 select 쿼리가 나간다.
+  - 회원 1이 팀 A를 불러 올 때 최초 SQL을 날린다.
+  - 회원 2는 같은 팀 A이므로 1차 캐시에서 가져온다.
+  - 회원 3의 팀 B는 영속성 컨텍스트에 존재하지 않으므로 새로운 쿼리를 날린다.
+- N + 1 문제
+  - 소속이 다 다르면 N개만큼 계속 쿼리가 나가야 한다.
+  - 회원을 가져오기 위해 최초에 날린 1번의 쿼리 + 회원이 소속된 팀 개수 N만큼 날린다.
+
+### fetch join 예제
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        // fetch join 사용
+        String jpql = "select m from Member m join fetch m.team";
+        List<Member> members = em.createQuery(jpql, Member.class)
+                .getResultList();
+
+        for (Member member : members) {
+            System.out.println("username = " + member.getUsername() + ", "
+                    + "teamName = " + member.getTeam().name());
+        }
+    }
+}
+```
+- fetch join으로 팀과 회원을 한방에 조회
+  - 지연 로딩x
+  - 즉, `member.getTeam().name()` 호출시에 프록시가 아닌 실제 엔티티를 날린다.
+- 지연 로딩으로 되어있어도 fetch join의 우선순위가 높다.
+
+### 컬렉션 fetch join
+- 일대다 관계에서의 컬렉션 조회
+![](/assets/컬렉션fetch.png)
+- 팀에서 N인 회원을 조회
+- 회원 만큼 팀이 중복으로 출력
+- db입장에서는 일대다 join시 데이터가 뻥튀기 된다.
+![](/assets/컬렉션fetch2.png)
+/[](/assets/컬렉션fetch3.png)
+- 팀 A로 join시 회원이 2명이므로 2개의 데이터 생성
+- jpa입장에서는 회원이 몇명인지 미리 알 수 없으므로 db가 반환하는대로 가져온다.
+![](/assets/컬렉션fetch4.png)
+- row는 2개이지만 영속성 컨텍스트에 있는 ID는 같이 공유하므로 주소 값이 동일
+
+### fetch join과 DISTINCT
+- SQL의 DISTINCT
+  - 중복을 완벽하게 제거 불가능
+- JPQL은 DISTINC에 2가지 기능을 제공한다.
+  - SQL에 DISTINCT 추가
+  - SQL 경과를 애플리케이션에서 받은 뒤 엔티티 중복 제거
+```JAVA
+select distinct t
+from Team t
+         join fetch t.members
+where t.name = '팀A'
+```
+- SQL의 DISTINCT는 데이터가 완벽하게 동일해야 적용된다.
+- 따라서 JPA가 애플리케이션에서 추가적인 중복 제거를 시도한다.
+- JQPL의 DISTINCT가 같은 식별자를 가진 Team Entity를 자동으로 제거한다.
+
+### 일반 join과의 차이
+
+#### 일반 join
+- 연관된 엔티티를 함께 조회하지 않는다.
+  - jpql에 일반 join을 날리면 sql에서 team만 select한다.
+  - team 엔티티만 조회하고 member entity는 조회하지 않는다.
+  - `team.getMembers()`를 하는 시점에 쿼리를 다시 날린다.
+
+#### fetch join
+- 팀 정보를 가져올 때 회원 정보도 함께 가져온다.
+- fetch join을 사용할 때만 연관 엔티티를 함께 조회한다.
+  - 즉시 로딩
+  - 객체 그래프를 sql 한방에 조회한다.
+
+### 한계
+- 별칭 사용 불가
+- 둘 이상의 컬렉션 불가
+- 페이징 api 사용 불가
+
+### @BatchSize
+```java
+@Entity
+public class Team {
+  
+  ...
+
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "team")
+    private List<Member> members = new ArrayList<>();
+  
+  ...
+}
+```
+- 페이징 때문에 fetch join을 사용하지 않는다면 @BatchSize를 사용한다.
+
+### fetch join의 특징
+- 연관된 엔티티를 sql 한번으로 조회하므로 성능 튜닝 가능.
+- 엔티티에 직접 적용하는 글로벌 로딩 전략보다 우선시된다.
+- 최적화가 필요한 곳은 fetch join을 사용하자.
+
+## 다형성 쿼리
+- 다형적으로 설계한 경우 특수한 기능을 사용 가능하다.
+
+### 조회 대상을 특정 자식으로 한정하기
+![](/assets/조회대상.png)
+- type()
+  - DTYPE로 특정 자식을 조회할 때 사용한다.
+
+### TREAT
+![](/assets/treat.png)
+- 자식의 타입으로 불러온다.
+- 상속 구조에서 부모 타입을 특정 자식 타입으로 다룰 때 사용한다.
+
+## 엔티티 직접 사용
+![](/assets/엔티티직접.png)
+- JQPL에서 id 대신 엔티티를 넣으면 sql에서 자동으로 해당 엔티티의 기본키를 사용한다.
+
+### 기본키
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        String jpql = "select m from Member m where m = :member";
+
+        List resultList = em.createQuery(jpql)
+                .setParameter("member", member).getResultList();
+    }
+}
+```
+- 엔티티를 파라미터로 넘기는 방식
+
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        String jpql = "select m from Member m where m = :member";
+
+        List resultList = em.createQuery(jpql)
+                .setParameter("member", member).getResultList();
+    }
+}
+```
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        String jpql = "select m from Member m where m.id = :memberId";
+
+        List resultList = em.createQuery(jpql)
+                .setParameter("memberId", memberId).getResultList();
+    }
+}
+```
+- 식별자 직접 전달
+```sql
+select m.*
+from Member m
+where m.id = ?
+```
+- sql 실행 결과는 같다.
+
+### 외래 키
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        Team team = em.find(Team.class, 1L);
+        // 엔티티를 파라미터로 바로 전달
+        // 연관 관계 매핑 설정에서 적어둔 FK를 사용한다.
+        String qlString = "select m from Member m where m.team = :team";
+
+        List resultList = em.createQuery(qlString)
+                .setParameter("team", team).getResultList();
+    }
+}
+```
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        // 키를 파라미터로 전달
+        String qlString = "select m from Member m where m.team.id = :teamId";
+
+        List resultList = em.createQuery(qlString)
+                .setParameter("teamId", teamId).getResultList();
+    }
+}
+```
+```sql
+select m.*
+from Member m
+where m.team_id = ?
+```
+
+## Named 쿼리
+- 미리 정의해서 이름을 부여하고 사용하는 쿼리
+- 정적 쿼리
+- 애너테이션, xml에 정의한다.
+
+### 특징
+- 애플리케이션 로딩 시점에 초기화 후 재사용한다.
+  - 정적 쿼리라 변하지 않으니 JPA나 하이버네이트가 파싱할 때 캐싱해서 사용한다.
+  - 즉, 로딩 시점에 한 번 캐싱을 해두므로 코스트가 줄어든다.
+- 애플리케이션 로딩 시점에 쿼리를 검증한다.
+  - 실행 시점에 문법이 안 맞으면 예외를 던진다.
+
+### 애너테이션에 정의
+```java
+@Entity
+// 쿼리에 미리 이름을 선언해 놓는다.
+@NamedQuery(
+        name = "Member.findByUsername",
+        query = "select m from Member m where m.username = :username")
+public class Member {
+  ...
+}
+
+public class JpaMain {
+
+    public static void main(String[] args) {
+        List<Member> resultList =
+                // 정의해둔 이름으로 쿼리를 사용한다.
+                em.createNamedQuery("Member.findByUsername", Member.class)
+                        .setParameter("username", "회원1")
+                        .getResultList();
+    }
+}
+```
+
+### XML에 정의
+```xml
+<persistence-unit name="jpabook">
+    <mapping-file>META-INF/ormMember.xml</mapping-file>
+```
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm" version="2.1">
+    <named-query name="Member.findByUsername">
+        <query><![CDATA[
+select m
+from Member m
+where m.username = :username
+]]></query>
+    </named-query>
+    <named-query name="Member.count">
+        <query>select count(m) from Member m</query>
+    </named-query>
+</entity-mappings>
+```
+- xml 설정이 우선권을 가진다.
+- 애플리케이션 운영 환경에 따라 다른 xml 배포가 가능하다.
+
+## 벌크 연산
+- pk를 지정하지 않고 실행하는 update, delete문
+```java
+public class JpaMain {
+
+    public static void main(String[] args) {
+        String qlString = "update Product p "
+                + "set p.price = p.price * 1.1 "
+                + "where p.stockAmount < :stockAmount";
+
+        int resultCount = em.createQuery(qlString)
+                .setParameter("stockAmount", 10)
+                // 영향받은 Entity 수를 반환한다.
+                .executeUpdate();
+    }
+}
+```
+- 벌크 연산을 사용하면 쿼리 한방으로 여러 row를 변경 가능하다.
+- 즉, 엔티티 여러개를 수정 가능하다.
+
+### 주의 사항
+- 벌크 연산은 영속성 컨텍스트를 무시하고 db에 직접 쿼리를 날린다.
+
+### 해결 방안
+- 영속성 컨텍스트 작업을 하기 전에 벌크 연산을 미리 실행한다.
+- 혹은, 벌크 연산 후 영속성 컨텍스트를 초기화 한다.
+
 
