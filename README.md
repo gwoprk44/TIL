@@ -52,6 +52,7 @@
     - [도메인 분석 설계](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/%EB%8F%84%EB%A9%94%EC%9D%B8%EB%B6%84%EC%84%9D%EC%84%A4%EA%B3%84.md)
     - [변경 감지와 병합](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/%EB%B3%80%EA%B2%BD%EA%B0%90%EC%A7%80%EC%99%80%EB%B3%91%ED%95%A9.md)
     - [JPA 자바 ORM 표준 프로그래밍](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/%EC%9E%90%EB%B0%94%20ORM%20%ED%91%9C%EC%A4%80%20JPA%20%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D.md)
+    - [스프링 부트와 JPA 활용 - API 개발과 성능 최적화](https://github.com/gwoprk98/TIL/blob/master/spring/jpa/API%20%EA%B0%9C%EB%B0%9C%EA%B3%BC%20%EC%84%B1%EB%8A%A5%20%EC%B5%9C%EC%A0%81%ED%99%94.md)
 - [servlet](https://github.com/gwoprk98/TIL/tree/master/spring/servlet)
     - [HttpServletRequest](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/HttpServletRequest.md)
     - [요청데이터](https://github.com/gwoprk98/TIL/blob/master/spring/servlet/%EC%9A%94%EC%B2%AD%20%EB%8D%B0%EC%9D%B4%ED%84%B0.md)
