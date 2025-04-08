@@ -472,3 +472,38 @@ public class OrderSimpleQueryDto {
 3. 그래도 안되면 DTO로 직접 조회한다.
 4. 최후의 방법은 JPA가 제공하는 네이티브 SQL이나 스프링 JDBC Template으로 직접 SQL을 쓰는 것이다.
 
+## 컬렉션 조회 최적화
+
+### 엔티티 직접 노출
+- 컬렉션인 1:N 관계를 조회하고 최적화한다.
+  - 1:N join시 데이터가 뻥튀기되어 최적화하기 힘들다.
+
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    private final OrderRepository orderRepository;
+
+    @GetMapping("/api/v1/orders")
+    public List<Order> ordersV1() {
+        List<Order> all = orderRepository.findAllByString(new OrderSearch());
+
+        for (Order order : all) {
+            order.getMember().getName(); // Lazy 강제 초기화
+            order.getDelivery().getAddress(); // Lazy 강제 초기화
+            List<OrderItem> orderItems = order.getOrderItems();
+            
+            // orderItem의 Item을 초기화 한다.
+            orderItems.forEach(o -> o.getItem().getName()); // Lazy 강제 초기화
+        }
+
+        return all;
+    }
+}
+```
+- Order - OrderItem,OrderItem - order 관계를 가져온다.
+- 지연 로딩으로 설정한 연관 관계는 강제로 초기화 한다.
+  - `hibernate5Module`는 지연 로딩 필드를 null로 출력한다.
+  - 양방향 관계는 한 쪽에 `JsonIgnore`를 꼭 붙여준다.
+  - 엔티티를 직접 노출하기 때문에 이 방법은 지양하는것이 좋다.
