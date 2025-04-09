@@ -507,3 +507,545 @@ public class OrderApiController {
   - `hibernate5Module`는 지연 로딩 필드를 null로 출력한다.
   - 양방향 관계는 한 쪽에 `JsonIgnore`를 꼭 붙여준다.
   - 엔티티를 직접 노출하기 때문에 이 방법은 지양하는것이 좋다.
+
+### Entity를 DTO로 변환: Fetch join
+
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    @GetMapping("/api/v2/orders")
+    public List<OrderDto> ordersV2() {
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch());
+
+        return orders.stream().map(OrderDto::new).collect(Collectors.toList());
+    }
+
+    @Data
+    static class OrderDto {
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+        private List<OrderItemDto> orderItems;
+
+        public OrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName();
+            orderDate = order.getOrderDate();
+            orderStatus = order.getStatus();
+            address = order.getDelivery().getAddress();
+            orderItems = order.getOrderItems().stream()
+                    .map(OrderItemDto::new)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Data
+    static class OrderItemDto {
+        private String itemName;
+        private int orderPrice;
+        private int count;
+
+        public OrderItemDto(OrderItem orderItem) {
+            itemName = orderItem.getItem().getName();
+            orderPrice = orderItem.getItem().getPrice();
+            count = orderItem.getCount();
+        }
+    }
+}
+```
+- 필드에서도 엔티티를 그대로 노출하면 안된다.
+  - OrderDto에는 OrderItem이 아니라 OrderItemDto 형태로 존재하여야 한다.
+  - 단순 값 타입은 변화할 일이 없으므로 바로 사용해도 무관하다.
+- 지연 로딩 쿼리 횟수
+  - order
+    - 1번
+  - member, address, orderItem
+    - order 결과 개수만큼
+  - item
+    - orderItem 결과 개수만큼
+  - 다만, 같은 Entity가 영속성 컨텍스트에 있다면 지연 로딩이더라도 SQL을 실행하지 않는다.
+
+#### fetch join 최적화
+- 쿼리가 많이 나가는 문제를 패치 조인을 통해 해결할것이다.
+```java
+@Repository
+@RequiredArgsConstructor
+public class OrderRepository {
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d" +
+                                " join fetch o.orderItems oi" +
+                                " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+}
+```
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+
+        return orders.stream()
+                .map(OrderDto::new)
+                .collect(toList());
+    }
+}
+```
+```json
+[
+  {
+    "orderId": 4,
+    "name": "userA",
+    "orderDate": "2022-05-01T12:07:06.612872",
+    "orderStatus": "ORDER",
+    "address": {
+      "city": "서울",
+      "street": "1",
+      "zipcode": "1111"
+    },
+    "orderItems": [
+      {
+        "itemName": "JPA1 BOOK",
+        "orderPrice": 10000,
+        "count": 1
+      },
+      {
+        "itemName": "JPA2 BOOK",
+        "orderPrice": 20000,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "orderId": 4,
+    "name": "userA",
+    "orderDate": "2022-05-01T12:07:06.612872",
+    "orderStatus": "ORDER",
+    "address": {
+      "city": "서울",
+      "street": "1",
+      "zipcode": "1111"
+    },
+    "orderItems": [
+      {
+        "itemName": "JPA1 BOOK",
+        "orderPrice": 10000,
+        "count": 1
+      },
+      {
+        "itemName": "JPA2 BOOK",
+        "orderPrice": 20000,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "orderId": 11,
+    "name": "userB",
+    "orderDate": "2022-05-01T12:07:06.643625",
+    "orderStatus": "ORDER",
+    "address": {
+      "city": "진주",
+      "street": "2",
+      "zipcode": "2222"
+    },
+    "orderItems": [
+      {
+        "itemName": "SPRING1 BOOK",
+        "orderPrice": 20000,
+        "count": 3
+      },
+      {
+        "itemName": "SPRING2 BOOK",
+        "orderPrice": 40000,
+        "count": 4
+      }
+    ]
+  },
+  {
+    "orderId": 11,
+    "name": "userB",
+    "orderDate": "2022-05-01T12:07:06.643625",
+    "orderStatus": "ORDER",
+    "address": {
+      "city": "진주",
+      "street": "2",
+      "zipcode": "2222"
+    },
+    "orderItems": [
+      {
+        "itemName": "SPRING1 BOOK",
+        "orderPrice": 20000,
+        "count": 3
+      },
+      {
+        "itemName": "SPRING2 BOOK",
+        "orderPrice": 40000,
+        "count": 4
+      }
+    ]
+  }
+]
+```
+하지만 order 결과가 2개, orderItem 4개를 조인하면 order가 4개로 뻥튀기되는 문제가 발생한다.
+
+![](/assets/뻥튀기.png)
+- order와 order를 조인하면 중복된 결과가 나온다.
+- order는 2개지만 order_item에는 각 order_id에 해당하는 주문이 2개씩 총 4개가 존재하기 때문.
+  - 즉, order_item 개수만큼 뻥튀기 된다.
+- 뻥튀기된 값은 레퍼런스마저 같다.
+
+```java
+@Repository
+@RequiredArgsConstructor
+public class OrderRepository {
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                        "select distinct o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d" +
+                                " join fetch o.orderItems oi" +
+                                " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+}
+```
+```json
+[
+  {
+    "orderId": 4,
+    "name": "userA",
+    "orderDate": "2022-05-01T12:06:19.629212",
+    "orderStatus": "ORDER",
+    "address": {
+      "city": "서울",
+      "street": "1",
+      "zipcode": "1111"
+    },
+    "orderItems": [
+      {
+        "itemName": "JPA1 BOOK",
+        "orderPrice": 10000,
+        "count": 1
+      },
+      {
+        "itemName": "JPA2 BOOK",
+        "orderPrice": 20000,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "orderId": 11,
+    "name": "userB",
+    "orderDate": "2022-05-01T12:06:19.664464",
+    "orderStatus": "ORDER",
+    "address": {
+      "city": "진주",
+      "street": "2",
+      "zipcode": "2222"
+    },
+    "orderItems": [
+      {
+        "itemName": "SPRING1 BOOK",
+        "orderPrice": 20000,
+        "count": 3
+      },
+      {
+        "itemName": "SPRING2 BOOK",
+        "orderPrice": 40000,
+        "count": 4
+      }
+    ]
+  }
+]
+```
+- 컬렉션의 데이터 뻥튀기를 막기위해 `distinct`를 사용한다.
+
+#### DB의 distinct
+- 한 줄이 완전히 같아야 제거
+  - 몇몇 상황에서는 중복 데이터의 모든 칼럼 데이터가 같지 않아 제거되지 않는다.
+  - ex. order는 겹치지만 order_item 값은 겹치지 않아 제거x
+
+#### JPA의 distinct
+- SQL에 distinct를 추가해서 실제 distinct 쿼리가 나간다.
+  - DB상에서는 distinct를 붙이나 안 붙이나 제거되지 않고 들어온다.
+- 애플리케이션 상에서 다시 한 번 중복을 거른다.
+  - 조회 결과에 같은 Entity가 조회되면 즉, 레퍼런스가 같은 중복 데이터가 있으면 날린다.
+- 페이징이 불가능하다는 단점이 있다.
+  - 페이징을 설정해도 limit, offset 쿼리가 나가지 않는다.
+  - order가 중복 2개씩 총 4개가 있는데 페이징으로 order 1을 건너뛰어도 그 다음 페이지에 중복인 order 1이 다시 들어가서 이상해진다.
+    - 우리가 원하는 건 order 2개인데 order_item 기준으로 페이징 된다.
+  - 컬렉션 fetch join에서 페이징을 사용하면 모든 데이터를 DB에서 일단 읽어온 뒤, 메모리에서 페이징하면서 OOM이 발생할 수 있다.
+
+#### 컬렉션의 fetch join
+- 컬렉션 패치 조인은 1개만 사용 가능하다.
+- 2개 이상의 컬렉션에서는 사용할 수 없다.
+  - 1대 다의 다가 되면서 다 * 다가 되므로 데이터가 뻥튀기되면서 부정확하게 조회된다.
+
+### Entity를 DTO로 변환: 페이징과 한계 돌파
+- 컬렉션을 fetch join 하면 페이징이 불가능하다.
+  - 1:N 조인이 발생하므로 데이터가 에측하지 못한 방향으로 뻥튀기된다.
+  - 1:N에서 1을 기준으로 페이징 하는게 목적인데 데이터는 N을 기준으로 row가 생성된다.
+  - 즉, order를 페이징하고 싶은데 orderItem이 기준이 되어버린다.
+- 하이버네이트는 모든 DB 데이터를 읽어온 뒤 메모리에서 페이징하는 위험한 상황이 벌어질 수 있다.
+
+#### 해결 방법
+- OneToOne, ManyToOne 관계를 모두 fetch join 한다.
+  - ToOne 관계는 row 수를 증가시키지 않으므로 페이징 쿼리에 영향을 주지 않는다.- ex) order의 member, delivery
+- 컬렉션은 지연 로딩으로 조회한다.
+  - fetch join은 사용하지 않는다.
+  - ex) order의 orderItem
+- 지연 로딩 성능 최적화를 위해 hibernate.default_batch_fetch_size와 @BatchSize를 적용한다.
+  - 컬렉션이나 프록시 객체를 설정한 size만큼 in 쿼리로 조회한다.
+  - hibernate.default_batch_fetch_size
+    - 글로벌로 설정할 때 사용
+  - @BatchSize
+    - 개별로 최적화 할 때 사용
+
+#### Before
+```java
+@Repository
+@RequiredArgsConstructor
+public class OrderRepository {
+
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        // ToOne 관계는 fetch join으로 가져온다.
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+}
+```
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page() {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery();
+        return orders.stream().map(OrderDto::new).collect(Collectors.toList());
+    }
+}
+```
+```sql
+select order0_.order_id       as order_id1_6_0_,
+       member1_.member_id     as member_i1_4_1_,
+       delivery2_.delivery_id as delivery1_2_2_,
+       order0_.delivery_id    as delivery4_6_0_,
+       order0_.member_id      as member_i5_6_0_,
+       order0_.order_date     as order_da2_6_0_,
+       order0_.status         as status3_6_0_,
+       member1_.city          as city2_4_1_,
+       member1_.street        as street3_4_1_,
+       member1_.zipcode       as zipcode4_4_1_,
+       member1_.name          as name5_4_1_,
+       delivery2_.city        as city2_2_2_,
+       delivery2_.street      as street3_2_2_,
+       delivery2_.zipcode     as zipcode4_2_2_,
+       delivery2_.status      as status5_2_2_
+from orders order0_
+         inner join
+     member member1_ on order0_.member_id = member1_.member_id
+         inner join
+     delivery delivery2_ on order0_.delivery_id = delivery2_.delivery_id
+
+select orderitems0_.order_id      as order_id5_5_0_,
+       orderitems0_.order_item_id as order_it1_5_0_,
+       orderitems0_.order_item_id as order_it1_5_1_,
+       orderitems0_.count         as count2_5_1_,
+       orderitems0_.item_id       as item_id4_5_1_,
+       orderitems0_.order_id      as order_id5_5_1_,
+       orderitems0_.order_price   as order_pr3_5_1_
+from order_item orderitems0_
+where orderitems0_.order_id = ?
+
+select item0_.item_id        as item_id2_3_0_,
+       item0_.name           as name3_3_0_,
+       item0_.price          as price4_3_0_,
+       item0_.stock_quantity as stock_qu5_3_0_,
+       item0_.artist         as artist6_3_0_,
+       item0_.etc            as etc7_3_0_,
+       item0_.author         as author8_3_0_,
+       item0_.isbn           as isbn9_3_0_,
+       item0_.actor          as actor10_3_0_,
+       item0_.director       as directo11_3_0_,
+       item0_.dtype          as dtype1_3_0_
+from item item0_
+where item0_.item_id = ?
+
+select item0_.item_id        as item_id2_3_0_,
+       item0_.name           as name3_3_0_,
+       item0_.price          as price4_3_0_,
+       item0_.stock_quantity as stock_qu5_3_0_,
+       item0_.artist         as artist6_3_0_,
+       item0_.etc            as etc7_3_0_,
+       item0_.author         as author8_3_0_,
+       item0_.isbn           as isbn9_3_0_,
+       item0_.actor          as actor10_3_0_,
+       item0_.director       as directo11_3_0_,
+       item0_.dtype          as dtype1_3_0_
+from item item0_
+where item0_.item_id = ?
+    ...반복
+```
+- 위 로그는 order 결과 하나 당 나가는 쿼리다.
+  - order 조회 후 order_item을 쿼리한다.
+  - order_item에 item이 2개 있으므로 다시 2번 쿼리 한다.
+- 다른 order에 대해서도 똑같이 order_item 1번, item 2번 쿼리한다.
+- order가 100개라면 더 많은 쿼리가 나가게 될 것이다.
+
+#### After
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page(
+            @RequestParam(value = "offset", defaultValue = "0") int offset,
+            @RequestParam(value = "limit", defaultValue = "100") int limit) {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit);
+
+        return orders.stream().map(OrderDto::new).collect(Collectors.toList());
+    }
+}
+```
+```java
+@Repository
+public class OrderRepository {
+
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class)
+                // 페이징을 적용한다.
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+}
+```
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        # 미리 in 절로 땡겨 올 데이터 개수
+        default_batch_fetch_size: 1000
+```
+```sql
+select order0_.order_id       as order_id1_6_0_,
+       member1_.member_id     as member_i1_4_1_,
+       delivery2_.delivery_id as delivery1_2_2_,
+       order0_.delivery_id    as delivery4_6_0_,
+       order0_.member_id      as member_i5_6_0_,
+       order0_.order_date     as order_da2_6_0_,
+       order0_.status         as status3_6_0_,
+       member1_.city          as city2_4_1_,
+       member1_.street        as street3_4_1_,
+       member1_.zipcode       as zipcode4_4_1_,
+       member1_.name          as name5_4_1_,
+       delivery2_.city        as city2_2_2_,
+       delivery2_.street      as street3_2_2_,
+       delivery2_.zipcode     as zipcode4_2_2_,
+       delivery2_.status      as status5_2_2_
+from orders order0_
+         inner join
+     member member1_ on order0_.member_id = member1_.member_id
+         inner join
+     --     페이징이 적용된다.
+         delivery delivery2_ on order0_.delivery_id = delivery2_.delivery_id limit ?
+offset ?
+
+select orderitems0_.order_id      as order_id5_5_1_,
+       orderitems0_.order_item_id as order_it1_5_1_,
+       orderitems0_.order_item_id as order_it1_5_0_,
+       orderitems0_.count         as count2_5_0_,
+       orderitems0_.item_id       as item_id4_5_0_,
+       orderitems0_.order_id      as order_id5_5_0_,
+       orderitems0_.order_price   as order_pr3_5_0_
+from order_item orderitems0_
+-- in 절로 땡겨온다.
+where orderitems0_.order_id in (
+                                ?, ?
+    )
+
+select item0_.item_id        as item_id2_3_0_,
+       item0_.name           as name3_3_0_,
+       item0_.price          as price4_3_0_,
+       item0_.stock_quantity as stock_qu5_3_0_,
+       item0_.artist         as artist6_3_0_,
+       item0_.etc            as etc7_3_0_,
+       item0_.author         as author8_3_0_,
+       item0_.isbn           as isbn9_3_0_,
+       item0_.actor          as actor10_3_0_,
+       item0_.director       as directo11_3_0_,
+       item0_.dtype          as dtype1_3_0_
+from item item0_
+-- in 절로 땡겨온다.
+where item0_.item_id in (
+                         ?, ?
+    )
+```
+- 페이징이 잘 적용되었다.
+- default_batch_fetch_size
+  - order 2개와 그 아래의 데이터를 가져오는 데 쿼리가 3개만 나갔다.
+  - 이전에는 order 마다 item 쿼리 2개씩 총 4개가 나갔는데 확 줄었다.
+  - pk 기준으로 in 절을 날리기 때문에 쿼리 최적화로 빠르게 가져온다.
+  - fetch_size를 100으로 정했는데 데이터가 1000개면 쿼리는 10개가 나간다.
+
+#### 비교
+![](/assets/v3.png)
+- v3
+  - 한방 쿼리로 모든걸 가져온다.
+  - 컬렉션 때문에 중복 데이터가 많아 성능상 문제가 있다.
+
+![](/assets/v3.1.png)
+- v3.1
+  - 중복 없이 최적화가 이루어진다.
+  - 데이터를 몇 천개씩 퍼올릴때 사용하면 좋다.
+
+#### 장점
+- 쿼리 호출 수가 1+N에서 1+1로 최적화된다.
+- fetch join과 비교해 쿼리 호출 수가 약간 증가하지만 중복이 제거되어 DB 데이터 전송량이 감소한다.
+- 컬렉션 fetch join은 페이징이 불가능하지만 이 방법은 페이징이 가능하다.
+  - ToOne 관계는 fetch join 해도 페이징에 영향을 주지 않는다.
+  - 따라서 ToOne 관계는 fetch join으로 쿼리 수를 줄이고, 나머지는 default_batch_fetch_size로 최적화 한다.
+
+#### default_batch_fetch_size
+- 적어놓은 개수만큼 미리 땡겨온다.
+  - in 절은 PK를 가지고 빠른 속도로 조회해온다.
+- 설정 값은 in 쿼리에 들어갈 조건의 개수와 같다.
+  - 데이터가 1000개이고 100으로 설정해놨다면 쿼리가 10번 나간다.
+
+실무에서 웬만하면 이 설정을 켜두고 있는 게 좋다.
+
+#### 적정값
+- 1000개 이상은 부하로 오류가 발생하므로 사용하지 않는다.
+  - DB에 따라 in절 파라미터를 1000으로 제한하기도 한다.
+- 100~1000 사이를 권장한다.
+  - 값이 적으면 부하를 낮추는 대신 잘라가면서 가니까 속도가 느리다.
+
+```java
+orders.stream().map(OrderDto::new).collect(Collectors.toList());
+```
+- 애플리케이션은 100이든 1000이든 결국 loop를 돌면서 전체 데이터를 로딩한다.
+- 따라서 WAS 입장에서는 메모리 사용량이 같다.
+- 1000이 쿼리를 덜 날려도 되니 성능상 가장 좋지만, DB와 애플리케이션 모두가 순간 부하를 견딜 수 있는 값으로 한다.
