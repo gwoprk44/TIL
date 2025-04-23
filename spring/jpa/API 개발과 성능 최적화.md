@@ -1049,3 +1049,376 @@ orders.stream().map(OrderDto::new).collect(Collectors.toList());
 - 애플리케이션은 100이든 1000이든 결국 loop를 돌면서 전체 데이터를 로딩한다.
 - 따라서 WAS 입장에서는 메모리 사용량이 같다.
 - 1000이 쿼리를 덜 날려도 되니 성능상 가장 좋지만, DB와 애플리케이션 모두가 순간 부하를 견딜 수 있는 값으로 한다.
+
+### DTO 직접 조회
+- 화면이나 api에 fit한 용도로만 사용하는 쿼리는 패키지를 따로 파서 구현한다.
+- 화면과 관련된 로직과 중요 핵심 비즈니스 로직 구분이 가능해진다.
+
+```java
+@Repository
+@RequiredArgsConstructor
+public class OrderQueryRepository {
+
+    private final EntityManager em;
+
+    public List<OrderQueryDto> findOrderQueryDtos() {
+        List<OrderQueryDto> result = findOrders();
+
+        result.forEach(o -> {
+            List<OrderItemQueryDto> orderItems = findOrderItems(o.getOrderId());
+            o.setOrderItems(orderItems);
+        });
+        return result;
+    }
+
+    // 컬렉션은 별도의 메서드로 조회한다.
+    private List<OrderItemQueryDto> findOrderItems(Long orderId) {
+        return em.createQuery(
+                        "select new jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count)" +
+                                " from OrderItem oi" +
+                                " join oi.item i" +
+                                " where oi.order.id = : orderId", OrderItemQueryDto.class)
+                .setParameter("orderId", orderId)
+                .getResultList();
+    }
+
+    private List<OrderQueryDto> findOrders() {
+        return em.createQuery(
+                        "select new jpabook.jpashop.repository.order.query.OrderQueryDto(o.id, m.name, o.orderDate, o.status, d.address)" +
+                                " from Order o" +
+                                " join o.member m" +
+                                " join o.delivery d", OrderQueryDto.class)
+                .getResultList();
+    }
+}
+```
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
+
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> ordersV4() {
+        return orderQueryRepository.findOrderQueryDtos();
+    }
+}
+```
+```java
+@Data
+public class OrderQueryDto {
+    private Long orderId;
+    private String name;
+    private LocalDateTime orderDate;
+    private OrderStatus orderStatus;
+    private Address address;
+    private List<OrderItemQueryDto> orderItems;
+
+    // 컬렉션은 생성자에서 제외한다.
+    public OrderQueryDto(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address) {
+        this.orderId = orderId;
+        this.name = name;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        this.address = address;
+    }
+}
+```
+```java
+@Data
+public class OrderItemQueryDto {
+    private Long orderId;
+    private String itemName;
+    private int orderPrice;
+    private int count;
+
+    public OrderItemQueryDto(Long orderId, String itemName, int orderPrice, int count) {
+        this.orderId = orderId;
+        this.itemName = itemName;
+        this.orderPrice = orderPrice;
+        this.count = count;
+    }
+}
+```
+- 쿼리는 루트(order)에서 한번, 컬렉션에서(order_item)에서 N번 실행된다.
+- ToOne 관계를 먼저 조회하고 ToMany 단계는 별도로 처리한다.
+  - ToOne은 join해도 데이터 row 수가 증가하지 않는다.
+    - row가 증가하지 않기 때문에 join으로 최적화하기 쉬워 한 번에 조회한다.
+  - ToMany는 join 하면 row 수가 증가한다.
+    - 최적화하기 어려우므로 findOrderItems()같은 별도의 메서드로 조회한다.
+
+#### N+1
+```java
+public class OrderQueryRepository {
+
+    private final EntityManager em;
+
+    public List<OrderQueryDto> findOrderQueryDtos() {
+        // query 1번 -> 결과는 N개
+        List<OrderQueryDto> result = findOrders();
+
+        // query N번
+        result.forEach(o -> {
+            List<OrderItemQueryDto> orderItems = findOrderItems(o.getOrderId());
+            o.setOrderItems(orderItems);
+        });
+        return result;
+    }
+}
+```
+- forEach를 돌며 N+1을 초래한다.
+
+### DTO 직접 조회: 컬렉션 조회 최적화
+
+#### IN절
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
+
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDto> ordersV5() {
+        return orderQueryRepository.findAllByDto_optimization();
+    }
+
+}
+```
+```java
+@Repository
+@RequiredArgsConstructor
+public class OrderQueryRepository {
+    public List<OrderQueryDto> findAllByDto_optimization() {
+        // 일단 루트 쿼리로 ToOne 코드를 한 방에 가져온다.
+        List<OrderQueryDto> result = findOrders();
+
+        // orderId만 따로 뽑은 다음 쿼리 파라미터로 바로 넘겨버린다.
+        List<Long> orderIds = result.stream().map(OrderQueryDto::getOrderId).collect(Collectors.toList());
+
+        // 쿼리는 한 번만 날린다.
+        List<OrderItemQueryDto> orderItems = em.createQuery(
+                        "select new jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count)" +
+                                " from OrderItem oi" +
+                                " join oi.item i" +
+                                // in절로 여러 orderId에 대한 order_item을 한 번에 가져온다.
+                                " where oi.order.id in :orderIds", OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
+                .getResultList();
+
+        // 메모리상에서 map으로 변환 후 값을 매칭해서 가져온다.
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = orderItems.stream().collect(Collectors.groupingBy(OrderItemQueryDto::getOrderId));
+
+        result.forEach(o -> o.setOrderItems(orderItemMap.get(o.getOrderId())));
+
+        return result;
+    }
+}
+```
+- in절로 여러 orderId에 대한 쿼리를 한 번에 날린 뒤, 메모리 상에서 값을 매칭해 가져온다.
+  - map을 사용해 매칭했기 때문에 성능이 O(1)로 향상되었다.
+- 쿼리는 총 2번 나간다.
+  - 루트 쿼리 뒤에 orderItem을 가져오는 쿼리가 한 번만 실행된다.
+  - ToOne 관계를 먼저 조회하고 여기서 얻은 식별자 orderId로 ToMany 관계인 OrderItem을 한 번에 조회한다.
+
+### DTO 직접 조회: 플랫 데이터 최적화
+- 한방으로 쿼리를 날려보도록 하자.
+
+#### Join
+
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    @GetMapping("/api/v6/orders")
+    public List<OrderFlatDto> ordersV6() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllByDto_flat();
+
+        return flats;
+    }
+}
+```
+```java
+@Repository
+@RequiredArgsConstructor
+public class OrderQueryRepository {
+
+    public List<OrderFlatDto> findAllByDto_flat() {
+        // 모든 데이터를 join 한다.
+        return em.createQuery("select new jpabook.jpashop.repository.order.query.OrderFlatDto(o.id, m.name, o.orderDate, o.status, d.address, i.name, oi.orderPrice, oi.count)" +
+                        " from Order o" +
+                        " join o.member m" +
+                        " join o.delivery d" +
+                        " join o.orderItems oi" +
+                        " join oi.item i", OrderFlatDto.class)
+                .getResultList();
+    }
+}
+```
+```java
+@Data
+public class OrderFlatDto {
+
+    private Long orderId;
+    private String name;
+    private LocalDateTime orderDate;
+    private Address address;
+    private OrderStatus orderStatus;
+
+    private String itemName;
+    private int orderPrice;
+    private int count;
+
+    public OrderFlatDto(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address, String itemName, int orderPrice, int count) {
+        this.orderId = orderId;
+        this.name = name;
+        this.orderDate = orderDate;
+        this.address = address;
+        this.orderStatus = orderStatus;
+        this.itemName = itemName;
+        this.orderPrice = orderPrice;
+        this.count = count;
+    }
+}
+```
+- 이렇게 모든 데이터를 join 해서 조회하면 중복 데이터를 반환한다.
+- order가 아니라 orderItem이 기준이 되면서 페이징이 불가하다.
+- 하지만 쿼리를 한방만 날리는 장점이 있다.
+
+#### 중복 제거
+```java
+@RestController
+@RequiredArgsConstructor
+public class OrderApiController {
+
+    @GetMapping("/api/v6/orders")
+    public List<OrderQueryDto> ordersV6() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllByDto_flat();
+
+        return flats.stream()
+                // orderId 기준으로 묶는다.
+                .collect(groupingBy(o -> new OrderQueryDto(o.getOrderId(), o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        mapping(o -> new OrderItemQueryDto(o.getOrderId(), o.getItemName(), o.getOrderPrice(), o.getCount()), toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDto(e.getKey().getOrderId(), e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(), e.getKey().getAddress(), e.getValue()))
+                .collect(toList());
+    }
+}
+```
+```java
+@Data
+// groupingBy할 때 묶는 기준이 뭔지 알려줘야 한다.
+@EqualsAndHashCode(of = "orderId")
+public class OrderQueryDto {
+    private Long orderId;
+    private String name;
+    private LocalDateTime orderDate;
+    private OrderStatus orderStatus;
+    private Address address;
+    private List<OrderItemQueryDto> orderItems;
+
+    public OrderQueryDto(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address) {
+        this.orderId = orderId;
+        this.name = name;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        this.address = address;
+    }
+
+    public OrderQueryDto(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address, List<OrderItemQueryDto> orderItems) {
+        this.orderId = orderId;
+        this.name = name;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        this.address = address;
+        this.orderItems = orderItems;
+    }
+}
+```
+- API 스펙을 OrderQueryDto로 맞춰야 한다면 노가다로 중복을 제거해 변환할 수 있다.
+- @EqualsAndHashCode(of = "orderId")
+
+#### 단점
+- 쿼리는 한 번이지만 join으로 인해 DB에서 애플리케이션에 전달하는 데이터가 중복된다.
+  - 상황에 따라 V5보다 더 느릴 수도 있다.
+- 애플리케이션에서 해야 할 추가 작업이 크다.
+  - 분해하는 추가 작업이 필요하다.
+- 페이징이 불가능하다.
+  - 데이터가 중복되기 때문에 정확한 페이징 결과가 나오지 않는다.
+  - 2개만 페이지 하면 중복 데이터 2개만 나오게 된다.
+
+### 정리
+
+#### 엔티티 조회 후 DTO 변환
+
+V1
+- 엔티티를 조회하여 직접 반환한다.
+- 엔티티가 변화면 API 스펙도 변화하기 때문에 DTO로 변환하는것을 권장.
+
+V2
+- 엔티티 조회 후 DTO로 변환.
+- 여러 테이블을 join할 때 성능이 나오지 않는다.
+
+V3
+- 페치 조인으로 쿼리 수를 최적화 한다.
+
+V3.1
+- 컬렉션은 fetch join 시 페이징이 불가능하다.
+- 실무에서는 페이징을 할 일이 많으므로 다음과 같이 구현한다.
+  - ToOne 관계는 fetch join으로 쿼리 수를 최적화한다.
+  - 컬렉션은 fetch join 대신 지연 로딩을 유지한다.
+    - fetch join을 하면 페이징이 안되기 때문이다.
+  - hibernate.default_batch_fetch_size, @BatchSize로 최적화한다.
+    - 지연 로딩을 하면 N+1 문제가 나타나므로 이 옵션으로 해결한다.
+
+#### DTO로 직접 조회
+
+V4
+- JPA에서 DTO를 직접 조회한다.
+- 코드가 단순하다.
+- 컬렉션이 아니라 특정 주문 한건만 조회한다면 이 방식으로 성능이 잘 나온다.
+
+V5
+- 컬렉션 조회를 최적화한다.
+  - in 절을 활용해 메모리 상에서 map으로 값을 매칭한다.
+- 여러 주문을 한 번에 조회하는 경우에는 이 방식을 사용한다.
+  - Order 데이터가 1000건일 때 V4는 쿼리가 1 + 1000번 실행된다.
+    - 1은 Order를 조회한 쿼리 수, 1000은 조회된 Order의 row 수다.
+  - V5를 쓰면 쿼리가 총 1 + 1만 실행된다.
+- 쿼리가 2번 나가지만(네트워크를 2번 타지만) 딱 정규화된 데이터를 보낸다.
+- DTO를 직접 조회해야할 때는 거의 V5 방식을 많이 사용한다.
+- 코드가 복잡하다.
+
+V6
+- 플랫 데이터로 최적화한다.
+  - join 결과를 그대로 조회한 후 애플리케이션에서 원하는 모양으로 직접 변환한다.
+- 쿼리 한 번으로 조회해서 좋아 보이지만 Order 기준으로 페이징이 불가하다.
+- 실무에서는 이 정도로 데이터가 많으면 페이징이 꼭 필요하므로 선택하기 어렵다.
+- 데이터가 많으면 중복 전송이 증가해서 V5와의 성능 차이도 미비하다.
+  - 데이터가 뻥튀기 되어서 네트워크 전송량이 많아지기 때문에 그걸 따지면 V5가 더 좋을 수도 있다.
+
+### 권장 순서
+1. Entity 조회 후 DTO로 변환하는 방식을 우선 고려한다.
+  - fetch join으로 쿼리 수를 최적화한다.
+  - 컬렉션을 최적화한다.
+    - 페이징이 필요하다면 hibernate.default_batch_fetch_size, @BatchSize로 최적화한다.
+    - 페이징이 필요없다면 fetch join을 사용한다.
+2. Entity 조회 방식으로 해결이 안되면 DTO 조회 방식을 사용한다.
+3. DTO 조회 방식으로 해결이 안되면 NativeSQL이나 스프링 JdbcTemplate을 사용한다.
+
+### 참고
+- Entity 조회 방식은 코드를 거의 수정하지 않는다.
+  - fetch join, hibernate.default_batch_fetch_size, @BatchSize 등 옵션만 약간 변경해서 다양한 성능 최적화를 시도할 수 있다.
+- DTO를 직접 조회하는 방식은 성능을 최적화하거나 성능 최적화 방식을 변경할 때 많은 코드를 변경해야 한다.
+- Entity 조회 방식으로 대부분의 애플리케이션이 해결된다.
+- 해결이 안되는 문제는 정말 트래픽이 많은 것이므로 캐시 등 다른 방법을 생각해봐야 한다.
+  - 참고로 Entity는 영속성 컨텍스트에서 관리되는 상태가 있기 때문에 캐싱하면 안된다.
+  - Entity를 DTO로 변환한 값을 캐시해야 한다.
+- Entity 조회 방식은 JPA가 많은 부분을 최적화해주기 때문에 단순한 코드를 유지하면서 성능을 최적화할 수 있다.
+- DTO 조회 방식은 SQL을 직접 다루는 것과 유사하기 때문에 성능 최적화와 코드 복잡도 사이에서 줄타기를 해야한다.
+
+
