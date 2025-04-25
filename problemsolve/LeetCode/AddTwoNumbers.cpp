@@ -19,7 +19,7 @@ public:
         ListNode* result = new ListNode(0); // 더미 노드
         ListNode* ptr = result;
 
-        while (l1 != NULL || l2 != NULL) {
+        while (l1 != NULL || l2 != NULL || carry) {
             int sum = 0 + carry;
 
             if (l1 != NULL) {
@@ -37,7 +37,6 @@ public:
             ptr->next = new ListNode(sum);
             ptr = ptr->next;
         }
-        if (carry == 1) ptr->next = new ListNode(1);
         
         return result->next;
     }
