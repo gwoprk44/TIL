@@ -16,13 +16,13 @@ public:
     ListNode *addTwoNumbers(ListNode *l1, ListNode *l2)
     {
         int carry = 0;
-        ListNode* head = new ListNode();
-        ListNode* tail = head;
+        ListNode* result = new ListNode(0); // 더미 노드
+        ListNode* ptr = result;
 
-        while (l1 != NULL || l2 != NULL || carry) {
-            int sum = 0;
+        while (l1 != NULL || l2 != NULL) {
+            int sum = 0 + carry;
 
-            if(l1 != NULL) {
+            if (l1 != NULL) {
                 sum += l1->val;
                 l1 = l1->next;
             }
@@ -32,13 +32,13 @@ public:
                 l2 = l2->next;
             }
 
-            sum += carry;
             carry = sum / 10;
-
-            ListNode* newNode = new ListNode(sum % 10);
-            tail->next = newNode;
-            tail = tail->next;
+            sum = sum % 10;
+            ptr->next = new ListNode(sum);
+            ptr = ptr->next;
         }
-        return head->next;
+        if (carry == 1) ptr->next = new ListNode(1);
+        
+        return result->next;
     }
 };
