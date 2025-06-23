@@ -1,6 +1,98 @@
 # 실전 스프링 데이터 JPA
 
 # 목차
+- [실전 스프링 데이터 JPA](#실전-스프링-데이터-jpa)
+- [목차](#목차)
+- [예제 도메인 모델](#예제-도메인-모델)
+- [공통 인터페이스 기능](#공통-인터페이스-기능)
+  - [순수 JPA 기반 리포지토리](#순수-jpa-기반-리포지토리)
+  - [공통 인터페이스 설정](#공통-인터페이스-설정)
+  - [공통 인터페이스 분석](#공통-인터페이스-분석)
+  - [주요 메서드](#주요-메서드)
+- [쿼리 메서드 기능](#쿼리-메서드-기능)
+  - [JPA Named Query](#jpa-named-query)
+  - [@Query](#query)
+    - [엔티티 조회](#엔티티-조회)
+    - [값 조회](#값-조회)
+    - [DTO 조회](#dto-조회)
+  - [파라미터 바인딩](#파라미터-바인딩)
+  - [반환 타입](#반환-타입)
+    - [단건](#단건)
+    - [컬렉션](#컬렉션)
+  - [페이징과 정렬](#페이징과-정렬)
+    - [순수 JPA](#순수-jpa)
+    - [스프링 데이터 JPA](#스프링-데이터-jpa)
+      - [파라미터](#파라미터)
+      - [반환 타입](#반환-타입-1)
+    - [예제](#예제)
+      - [Page](#page)
+      - [Slice](#slice)
+      - [List](#list)
+    - [Count 최적화](#count-최적화)
+    - [페이지를 유지하면서 엔티티를 DTO로 변환](#페이지를-유지하면서-엔티티를-dto로-변환)
+  - [벌크성 수정 쿼리](#벌크성-수정-쿼리)
+    - [순수 JPA](#순수-jpa-1)
+    - [스프링 데이터 JPA](#스프링-데이터-jpa-1)
+    - [주의 사항](#주의-사항)
+    - [참고](#참고)
+  - [@EntityGraph](#entitygraph)
+    - [N+1 문제](#n1-문제)
+    - [fetch Join](#fetch-join)
+    - [@EntityGraph](#entitygraph-1)
+    - [@NamedEntityGraph](#namedentitygraph)
+    - [활용](#활용)
+  - [JPA Hint \& Lock](#jpa-hint--lock)
+    - [JPA Hint](#jpa-hint)
+    - [Lock](#lock)
+- [확장 기능](#확장-기능)
+  - [사용자 정의 리포지토리](#사용자-정의-리포지토리)
+    - [예제](#예제-1)
+    - [규칙](#규칙)
+    - [참고](#참고-1)
+    - [최신 구현 방식](#최신-구현-방식)
+  - [Auditing](#auditing)
+    - [순수 JPA 사용](#순수-jpa-사용)
+    - [스프링 데이터 JPA 사용](#스프링-데이터-jpa-사용)
+    - [등록일, 수정일](#등록일-수정일)
+    - [등록자, 수정자](#등록자-수정자)
+    - [전체 적용](#전체-적용)
+    - [참고](#참고-2)
+  - [Web 확장](#web-확장)
+    - [도메인 클래스 컨버터](#도메인-클래스-컨버터)
+    - [페이징과 정렬](#페이징과-정렬-1)
+    - [기본 값 변경](#기본-값-변경)
+- [기본 페이지 사이즈](#기본-페이지-사이즈)
+- [최대 페이지 사이즈](#최대-페이지-사이즈)
+    - [개별 설정](#개별-설정)
+    - [접두사](#접두사)
+    - [Page 내용을 DTO로 변환](#page-내용을-dto로-변환)
+    - [Page를 1부터 시작하기](#page를-1부터-시작하기)
+      - [직접 클래스 생성](#직접-클래스-생성)
+      - [one-indexed-parameters 설정](#one-indexed-parameters-설정)
+- [스프링 데이터 JPA 분석](#스프링-데이터-jpa-분석)
+  - [구현체](#구현체)
+    - [@Repository](#repository)
+    - [@Transactional](#transactional)
+    - [@Transactional(readOnly = true)](#transactionalreadonly--true)
+  - [새로운 엔티티를 구별하는 방법](#새로운-엔티티를-구별하는-방법)
+    - [save()](#save)
+    - [Persistable](#persistable)
+- [나머지 기능](#나머지-기능)
+  - [Specifications](#specifications)
+    - [Predicate](#predicate)
+  - [QueryByExample](#querybyexample)
+    - [장점](#장점)
+    - [단점](#단점)
+  - [Projections](#projections)
+    - [인터페이스 기반 Closed Projections](#인터페이스-기반-closed-projections)
+    - [인터페이스 기반 Open Projections](#인터페이스-기반-open-projections)
+    - [클래스 기반 Projection](#클래스-기반-projection)
+    - [동적 Projections](#동적-projections)
+    - [중첩 구조 처리](#중첩-구조-처리)
+  - [Native Query](#native-query)
+    - [스프링 데이터 JPA 기반 네이티브 쿼리](#스프링-데이터-jpa-기반-네이티브-쿼리)
+    - [Projections 활용](#projections-활용)
+    - [동적 네이티브 쿼리](#동적-네이티브-쿼리)
 
 # 예제 도메인 모델
 
@@ -1835,4 +1927,419 @@ values ('2022-05-22T16:23:28.873+0900', 'A');
 - 등록 시간을 조합해서 사용하면 새 객체인지 쉽게 구별 가능하다.
 - 똑같은 테스트를실행하면 select 없이 insert 쿼리만 날리는걸 알 수 있다.
 
+# 나머지 기능
 
+## Specifications
+- 언어 상관없이 and, or을 조합해 쿼리할 수 있도록 하는 기능
+- 스프링 데이터 JPA는 JPA Criteria를 활용해 명세를 지원한다.
+
+### Predicate
+- 참 또는 거짓으로 평가한다.
+- and, or 같은 연산자를 조합하여 다양한 검색 조건을 쉽게 생성한다.
+```java
+public interface JpaSpecificationExecutor<T> {
+
+    Optional<T> findOne(@Nullable Specification<T> spec);
+
+    List<T> findAll(Specification<T> spec);
+
+    Page<T> findAll(Specification<T> spec, Pageable pageable);
+
+    List<T> findAll(Specification<T> spec, Sort sort);
+
+    long count(Specification<T> spec);
+}
+```
+- JpaSpecificationExecutor를 상속하면 사용할 수 있다.
+```java
+class MemberRepositoryTest {
+
+    @Test
+    public void specBasic() throws Exception {
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+        Member m1 = new Member("m1", 0, teamA);
+
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+        em.flush();
+        em.clear();
+
+        Specification<Member> spec = MemberSpec.username("m1").and(MemberSpec.teamName("teamA"));
+        List<Member> result = memberRepository.findAll(spec);
+
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+}
+```
+```java
+public class MemberSpec {
+
+    public static Specification<Member> teamName(final String teamName) {
+
+        // predicate를 만든다.
+        return (Specification<Member>) (root, query, builder) -> {
+            if (StringUtils.isEmpty(teamName)) {
+                return null;
+            }
+
+            // 회원과 조인한다.
+            Join<Member, Team> t = root.join("team", JoinType.INNER);
+            return builder.equal(t.get("name"), teamName);
+        };
+    }
+
+    public static Specification<Member> username(final String username) {
+        return (Specification<Member>) (root, query, builder) -> builder.equal(root.get("username"), username);
+    }
+}
+```
+
+## QueryByExample
+```java
+@SpringBootTest
+@Transactional
+public class QueryByExampleTest {
+
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    EntityManager em;
+
+    @Test
+    public void basic() throws Exception {
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+        
+        em.persist(new Member("m1", 0, teamA));
+        em.persist(new Member("m2", 0, teamA));
+        em.flush();
+
+        // Probe 생성
+        Member member = new Member("m1");
+
+        // 내부 조인으로 teamA 가능
+        Team team = new Team("teamA");
+        member.setTeam(team);
+
+        // ExampleMatcher 생성
+        // age 프로퍼티를 무시하도록 한다.
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("age");
+
+        Example<Member> example = Example.of(member, matcher);
+        List<Member> result = memberRepository.findAll(example);
+
+        assertThat(result.size()).isEqualTo(1);
+    }
+}
+```
+- Probe
+  - 필드에 데이터가 있는 실제 도메인 객체
+- ExampleMatcher
+  - 특정 필드를 일치시키는 상세한 정보 제공
+  - 재사용 가능
+- Example
+  - Probe와 ExampleMatcher로 구성
+  - 쿼리 생성에 사용
+
+### 장점
+- 동적 쿼리를 편리하게 처리
+- 도메인 객체를 그대로 사용
+- 추상화 
+- 스프링 데이터 JPA에 기본 포함
+
+### 단점
+- 내부 조인만 가능하고 외부조인 불가.
+- 중첩 제약 조건 불가.
+- 매칭 조건이 매우 단순하다.
+
+## Projections
+- 엔티티 대신 DTO로 편리하게 조회할 때 사용한다.
+  - 전체 엔티티가 아니라 회원 이름만 조회할 때 등.
+
+### 인터페이스 기반 Closed Projections
+```java
+public interface UsernameOnly {
+
+    // 조회할 엔티티 필드를 getter 형식으로 지정하면 해당 필드만 선택해서 조회한다.
+    String getUsername();
+}
+```
+```java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+
+    // 메서드 이름은 자유롭게 하면 되고 반환 타입으로 인지한다.
+    List<UsernameOnly> findProjectionsByUsername(String username);
+
+}
+```
+```java
+class MemberRepositoryTest {
+
+    @Test
+    public void projections() throws Exception {
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        List<UsernameOnly> result = memberRepository.findProjectionsByUsername("m1");
+
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+}
+```
+```sql
+select m.username
+from member m
+where m.username = 'm1';
+```
+```java
+public interface UsernameOnly {
+
+    // 조회할 엔티티 필드를 getter 형식으로 지정하면 해당 필드만 선택해서 조회한다.
+    String getUsername();
+}
+```
+
+### 인터페이스 기반 Open Projections
+```java
+import org.springframework.beans.factory.annotation.Value;
+
+public interface UsernameOnly {
+
+    @Value("#{target.username + ' ' + target.age + ' ' + target.team.name}")
+    String getUsername();
+}
+```
+```sql
+select member0_.member_id          as member_i1_1_,
+       member0_.created_by         as created_2_1_,
+       member0_.created_date       as created_3_1_,
+       member0_.last_modified_by   as last_mod4_1_,
+       member0_.last_modified_date as last_mod5_1_,
+       member0_.age                as age6_1_,
+       member0_.team_id            as team_id8_1_,
+       member0_.username           as username7_1_
+from member member0_
+where member0_.username = 'm1';
+```
+- SpEL 문법 지원
+- DB에서 엔티티 필드를 다 조회한 후에 계산하기 때문에 select 절 최적화가 불가능하다.
+
+### 클래스 기반 Projection
+```java
+public class UsernameOnlyDto {
+
+    private final String username;
+
+    // 생성자의 파라미터 이름으로 매칭한다.
+    public UsernameOnlyDto(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+}
+```
+```java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+
+    List<UsernameOnlyDto> findProjectionsByUsername(String username);
+
+}
+```
+```sql
+select member0_.username as col_0_0_
+from member member0_
+where member0_.username = 'm1';
+```
+- 인터페이스 대신 DTO 형식도 가능하다.
+- 생성자의 파라미터 이름으로 매칭한다.
+
+### 동적 Projections
+```java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+
+    <T> List<T> findProjectionsByUsername(String username, Class<T> type);
+
+}
+```
+```java
+class MemberRepositoryTest {
+
+    @Test
+    public void projections() throws Exception {
+        
+        ...
+
+        List<UsernameOnly> result = memberRepository.findProjectionsByUsername("m1", UsernameOnly.class);
+    }
+}
+```
+- 제네릭 타입을 활용하여 동적으로 프로젝션 데이터 변경
+
+### 중첩 구조 처리
+```java
+public interface NestedClosedProjection {
+
+    String getUsername();
+
+    TeamInfo getTeam();
+
+    interface TeamInfo {
+        String getName();
+    }
+
+}
+```
+```java
+class MemberRepositoryTest {
+
+    @Test
+    public void projections() throws Exception {
+
+        ...
+
+        List<UsernameOnly> result = memberRepository.findProjectionsByUsername("m1", UsernameOnly.class);
+    }
+}
+```
+```sql
+select member0_.username as col_0_0_, team1_.team_id as col_1_0_, team1_.team_id as team_id1_2_, team1_.name as name2_2_
+from member member0_
+         left outer join team team1_ on member0_.team_id = team1_.team_id
+where member0_.username = 'm1';
+```
+- 회원과 더불어 연관된 팀을 가져온다.
+- 프로젝션 대상이 root 엔티티면 JPQL select절을 최적화 한다.
+  - username처럼 처음에 나오는 루트는 최적화 하여 필요한 데이터만 불러온다.
+- 프로젝션 대상이 root가 아니면 left outer join으로 처리한다.
+  - 뒤에 있는 team은 엔티티를 모두 가져온다.
+
+## Native Query
+- sql을 직접 짜는 방식
+- 정말 어쩔 수 없는 경우에만 사용할 것.
+
+### 스프링 데이터 JPA 기반 네이티브 쿼리
+- 페이징 지원
+- 반환 타입
+  - Object[]
+  - Tuple
+  - DTO
+    - 스프링 데이터 인터페이스인 Projections 지원
+
+```JAVA
+public interface MemberRepository extends JpaRepository<Member, Long> {
+
+    @Query(value = "select * from member where username = ?", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+}
+```
+```java
+class MemberRepositoryTest {
+
+    @Test
+    void nativeQuery() {
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        Member result = memberRepository.findByNativeQuery("m1");
+    }
+}
+```
+```sql
+select *
+from member
+where username = 'm1';
+```
+- 조회하려는 필드를 select 절에 다 적어줘야 해서 불편하다.
+- JPQL처럼 애플리케이션 로딩 시점에 문법을 확인하는 것이 불가하다.
+- 동적 쿼리를 쓸 수 없다.
+- 반환 타입이 제한되어 있다.
+- Sort 파라미터를 통한 정렬이 정상 동작 하지 않을 수도 있다.
+  - 믿지 말고 직접 처리하자.
+- JPQL은 위치 기반 파라미터를 1부터 시작하지만 SQL은 0부터 시작한다.
+
+### Projections 활용
+- 스프링 데이터 JPA 네이티브 쿼리와 인터페이스 기반 Projections를 활용할 수 있다.
+```java
+public interface MemberProjection {
+
+    Long getId();
+
+    String getUsername();
+
+    String getTeamUsername();
+
+}
+```
+```java
+public interface MemberRepository extends JpaRepository<Member, Long> {
+
+    @Query(value = "SELECT m.member_id as id, m.username, t.name as teamName " +
+            "FROM member m left join team t",
+            countQuery = "SELECT count(*) from member",
+            nativeQuery = true)
+    Page<MemberProjection> findByNativeProjection(Pageable pageable);
+
+}
+```
+```java
+class MemberRepositoryTest {
+
+    @Test
+    void nativeQuery() {
+        ...
+
+        // 인덱스가 0부터 시작하므로 0으로 조회한다.
+        Page<MemberProjection> result = memberRepository.findByNativeProjection(PageRequest.of(0, 10));
+    }
+}
+```
+```sql
+SELECT m.member_id as id, m.username, t.name as teamName
+FROM member m
+         left join team t limit 10;
+
+SELECT count(*)
+from member;
+```
+
+### 동적 네이티브 쿼리
+```java
+class Example {
+    public static void main(String[] args) {
+        String sql = "select m.username as username from member m";
+
+        List<MemberDto> result = em.createNativeQuery(sql)
+                .setFirstResult(0)
+                .setMaxResults(10)
+                .unwrap(NativeQuery.class)
+                .addScalar("username")
+                .setResultTransformer(Transformers.aliasToBean(MemberDto.class))
+                .getResultList();
+    }
+}
+```
+- 하이버네이트 직접 활용
+- 스프링 JdbcTemplate, myBatis, jooq 같은 외부 라이브러리를 사용하는걸 추천
