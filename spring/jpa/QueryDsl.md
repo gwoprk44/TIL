@@ -1081,3 +1081,588 @@ public class QuerydslBasicTest {
 ```
 `member1_10`
 - ENUM과 문자가 아닌 타입은 stringValue()로 변환한다.
+
+# 중급 문법
+
+## 프로젝션과 결과 반환
+- 프로젝션
+  - select할 대상을 지정하는 것
+
+### 프로젝션 대상이 하나일 때
+```java
+class Projection {
+    void example() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                .fetch();
+    }
+}
+```
+
+### 프로젝션 대상이 둘일 때
+
+#### Tuple
+```java
+class Projection {
+    void example() {
+        List<Tuple> result = queryFactory
+                .select(member.username, member.age)
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            // 프로젝션 한 데이터를 각각 꺼내서 사용하면 된다.
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+
+            System.out.println("username=" + username);
+            System.out.println("age=" + age);
+        }
+    }
+}
+```
+- 튜플
+  - 결과가 여러 개일 때 담을 수 있도록 만든 QueryDsl 객체
+  - 리포지토리 계층에서만 사용하고 다른 레이어가 종속되지 않도록 한다.
+- 대상이 둘 이상이면 튜플이나 DTO로 조회해야 한다.
+
+#### 순수 JPA에서 DTO 조회
+```java
+@Data
+public class MemberDto {
+    private String username;
+    private int age;
+
+    public MemberDto() {
+    }
+
+    public MemberDto(String username, int age) {
+        this.username = username;
+        this.age = age;
+    }
+}
+```
+- 엔티티로 가져오면 필요하지 않은 데이터도 다 가져와야하므로 필요한 데이터만 가져올수 있도록 DTO를 만든다.
+- 기본 생성자가 필수적이다.
+
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void findDtoByJPQL() {
+        List<MemberDto> result = em.createQuery(
+                        "select new study.querydsl.dto.MemberDto(m.username, m.age) " +
+                                "from Member m", MemberDto.class)
+                .getResultList();
+    }
+}
+```
+- select에 DTO 타입을 new 명령어로 명시해준다.
+  - `select m from Member m` 이라고 하면 Member 엔티티를 조회하기 때문에 타입이 맞지 않는다.
+  - DTO의 패키지 이름을 다 적어야해서 지저분하다.
+  - 생성자 방식만 지원한다.
+
+#### QueryDsl 빈 생성
+1. 프로퍼티 접근
+```java
+   @SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void findDtoBySetter() {
+        List<MemberDto> result = queryFactory
+                // bean이 setter로 주입해준다.
+                .select(Projections.bean(
+                        MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+    }
+}
+```
+2. 필드 직접 접근
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void findDtoByField() {
+        List<MemberDto> result = queryFactory
+                // 필드에 바로 넣는다.
+                .select(Projections.fields(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+    }
+}
+```
+3. 생성자 사용
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void findDtoByConstructor() {
+        List<MemberDto> result = queryFactory
+                // 생성자를 사용한다.
+                .select(Projections.constructor(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+    }
+}
+```
+
+#### 별칭이 다를 때
+```java
+@Data
+public class UserDto {
+    private String name;
+    private int age;
+}
+```
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void findDtoByConstructor() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+    }
+}
+```
+- username인데 DTO에는 name으로 되어있어 일치하지않을 겨우 사용한다.
+`ExpressionUtils.as(source, alias)`
+- 필드나 서브 쿼리에 별칭을 적용한다.
+`username.as("memberName")`
+- 필드에 별칭을 적용한다.
+
+### @QueryProjection
+```java
+@Data
+public class MemberDto {
+    private String username;
+    private int age;
+
+    public MemberDto() {
+    }
+
+    @QueryProjection
+    public MemberDto(String username, int age) {
+        this.username = username;
+        this.age = age;
+    }
+}
+```
+```java
+/**
+ * study.querydsl.dto.QMemberDto is a Querydsl Projection type for MemberDto
+ */
+@Generated("com.querydsl.codegen.DefaultProjectionSerializer")
+public class QMemberDto extends ConstructorExpression<MemberDto> {
+
+    private static final long serialVersionUID = 1356709634L;
+
+    public QMemberDto(com.querydsl.core.types.Expression<String> username, com.querydsl.core.types.Expression<Integer> age) {
+        super(MemberDto.class, new Class<?>[]{String.class, int.class}, username, age);
+    }
+
+}
+```
+- 생성자에 @QueryProjection을 붙인 뒤 compileQuerydsl 한다.
+  - QMemberDto 클래스가 생성된다.
+
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void findDtoByQueryProjection() {
+        List<MemberDto> result = queryFactory
+                // DTO 클래스를 new로 바로 넣으면 된다.
+                // 생성자로 만들기 때문에 타입과 파라미터를 다 맞춰줘서 안정적으로 만들 수 있다.
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+    }
+}
+```
+- 컴파일러로 타입을 체크할 수 있어 안전하다.
+  - 컴파일 시점에 오류체크가 가능하다.
+- DTO에 QueryDsl 애너테이션을 유지하고 Q파일까지 만들어야 하는 단점이 존재한다.
+  - queryDsl에 의존적
+
+## 동적 쿼리
+
+### BooleanBuilder
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void dynamicQuery_BooleanBuilder() {
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        List<Member> result = searchMember1(usernameParam, ageParam);
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMember1(String usernameCondition, Integer ageCondition) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // username에 값이 있으면 그 값으로 and 조건을 넣는다.
+        if (usernameCondition != null) {
+            builder.and(member.username.eq(usernameCondition));
+        }
+
+        // age에 값이 있으면 그 값으로 and 조건을 넣는다.
+        if (ageCondition != null) {
+            builder.and(member.age.eq(ageCondition));
+        }
+
+        return queryFactory
+                .selectFrom(member)
+                .where(builder)
+                .fetch();
+    }
+}
+```
+```sql
+select member0_.member_id as member_i1_1_,
+       member0_.age       as age2_1_,
+       member0_.team_id   as team_id4_1_,
+       member0_.username  as username3_1_
+from member member0_
+where member0_.username = ?
+  and member0_.age = ?
+```
+- username과 age를 조건으로 쿼리.
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void dynamicQuery_BooleanBuilder() {
+        String usernameParam = "member1";
+        Integer ageParam = null;
+
+        List<Member> result = searchMember1(usernameParam, ageParam);
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
+    ...
+}
+```
+```sql
+select member0_.member_id as member_i1_1_,
+       member0_.age       as age2_1_,
+       member0_.team_id   as team_id4_1_,
+       member0_.username  as username3_1_
+from member member0_
+where member0_.username = ?
+```
+- null일 경우 조건으로 넣지 않는다.
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+    
+    ...
+
+    private List<Member> searchMember1(String usernameCondition, Integer ageCondition) {
+        // 필수 값을 미리 넣어둘 수도 있다.
+        BooleanBuilder builder = new BooleanBuilder(member.username.eq(usernameCondition));
+
+        ...
+    }
+}
+```
+- 빌더에 필수 값을 넣어 초기화도 가능하다.
+
+### where 다중 파라미터
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void dynamicQuery_WhereParam() {
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        List<Member> result = searchMember2(usernameParam, ageParam);
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMember2(String usernameCond, Integer ageCond) {
+        return queryFactory
+                .selectFrom(member)
+                .where(usernameEq(usernameCond), ageEq(ageCond))
+                .fetch();
+    }
+
+    private BooleanExpression usernameEq(String usernameCond) {
+        return usernameCond != null ? member.username.eq(usernameCond) : null;
+    }
+
+    private BooleanExpression ageEq(Integer ageCond) {
+        return ageCond != null ? member.age.eq(ageCond) : null;
+    }
+}
+```
+```sql
+select member0_.member_id as member_i1_1_,
+       member0_.age       as age2_1_,
+       member0_.team_id   as team_id4_1_,
+       member0_.username  as username3_1_
+from member member0_
+where member0_.username = ?
+  and member0_.age = ?
+```
+- where 조건에서 null 값은 무시된다.
+- 메서드를 다른 쿼리에서도 재사용 가능하다.
+- 쿼리 자체의 가독성이 높아진다.
+
+#### 조합
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    ...
+
+    private BooleanExpression allEq(String usernameCond, Integer ageCond) {
+        return usernameEq(usernameCond).and(ageEq(ageCond));
+    }
+}
+```
+```sql
+select member0_.member_id as member_i1_1_,
+       member0_.age       as age2_1_,
+       member0_.team_id   as team_id4_1_,
+       member0_.username  as username3_1_
+from member member0_
+where member0_.username = ?
+  and member0_.age = ?
+```
+- username과 age에 대한 두 조건을 하나로 합쳐서 사용 가능하다.
+- null 처리는 따로 해주어야 한다.
+
+## 수정, 삭제 벌크 연산
+
+### 대량 데이터 수정
+- 개별로 쿼리를 날리는것보다 한버에 쿼리를 날리는게 성능상 유리하다.
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void bulkUpdate() {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+    }
+}
+```
+```sql
+update member
+set username=?
+where age < ?
+
+update member
+set username=NULL
+where age < ?
+```
+```
+m = Member(id=3, username=비회원, age=10)
+m = Member(id=4, username=비회원, age=20)
+m = Member(id=5, username=member3, age=30)
+m = Member(id=6, username=member4, age=40)
+```
+- JPA는 영속성 컨텍스트에 엔티티를 올려놓는다.
+- 벌크 연산을 하게 되면 모든 데이터가 영속성 컨텍스트에 올라간다.
+- 벌크 연산은 영속성 컨텍스트를 무시하고 바로 쿼리를 날린다.
+- 따라서 DB 상태와 영속성 컨텍스트의 상태가 달라진다.
+
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void bulkUpdate() {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        for (Member m : result) {
+            System.out.println("m = " + m);
+        }
+    }
+}
+```
+```sql
+m = Member(id=3, username=member1, age=10)
+m = Member(id=4, username=member2, age=20)
+m = Member(id=5, username=member3, age=30)
+m = Member(id=6, username=member4, age=40)
+```
+- 만약 벌크연산 후 조회 로직을 넣는다면?
+- 이미 영속성 컨텍스트에 해당 id로 값이 존재하기 때문에 영속성 컨텍스트의 데이터가 우선적으로 보여진다.
+- 즉, DB에 비회원이라고 업데이트된 것과는 다른 값이 출력된다.
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void bulkUpdate() {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        for (Member m : result) {
+            System.out.println("m = " + member1);
+        }
+    }
+}
+```
+```sql
+m = Member(id=3, username=비회원, age=10)
+m = Member(id=4, username=비회원, age=20)
+m = Member(id=5, username=member3, age=30)
+m = Member(id=6, username=member4, age=40)
+```
+- flush로 영속성 컨텍스트와 DB를 맞춘 뒤, clear로 초기화 한다.
+
+## 대량 데이터 1씩 더하기
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void bulkUpdate() {
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+    }
+}
+```
+```sql
+update member set age=age+?
+update member set age=age+NULL
+```
+
+## 대량 데이터 삭제
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+
+    @Test
+    void bulkUpdate() {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
+}
+```
+```sql
+delete from member where age>?
+delete from member where age>NULL
+```
+
+## SQL Function 호출
+- JPA등 Dialect에 등록된 내용만 호출 가능하다.
+
+### 컬럼명 변경
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+    @Test
+    void sqlFunction() {
+        String result = queryFactory
+                .select(Expressions.stringTemplate(
+                        "function('replace', {0}, {1}, {2})",
+                        member.username, "member", "M"
+                )).from(member)
+                .fetchFirst();
+    }
+}
+```
+```sql
+select replace(member0_.username, ?, ?) as col_0_0_
+from member member0_ limit ?
+select replace(member0_.username, 1, NULL) as col_0_0_
+from member member0_ limit ?;
+```
+- member라는 단어를 모두 m으로 변경하여 조회한다.
+
+### 소문자 변경
+```java
+@SpringBootTest
+@Transactional
+public class QuerydslBasicTest {
+    @Test
+    void sqlFunction() {
+        String result = queryFactory
+                .select(member.username)
+                .from(member)
+                .where(member.username.eq(
+                        Expressions.stringTemplate("function('lower', {0})",
+                                member.username)))
+                .from(member)
+                .fetchFirst();
+    }
+}
+```
+```sql
+select member0_.username as col_0_0_ from member member0_ where member0_.username=lower(member0_.username) limit ?
+select member0_.username as col_0_0_ from member member0_ where member0_.username=lower(member0_.username) limit 1;
+```
+- 소문자 변환 등 자주 사용하는 일반적인 기능은 ANSI 표준이라서 기본적으로 내장되어 있다.
+`.where(member.username.eq(member.username.lower()))`
+- 위의 방식처럼 `lower()`로 대체 가능하다.
