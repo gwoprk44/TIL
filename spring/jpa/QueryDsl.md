@@ -1666,3 +1666,368 @@ select member0_.username as col_0_0_ from member member0_ where member0_.usernam
 - 소문자 변환 등 자주 사용하는 일반적인 기능은 ANSI 표준이라서 기본적으로 내장되어 있다.
 `.where(member.username.eq(member.username.lower()))`
 - 위의 방식처럼 `lower()`로 대체 가능하다.
+
+# 순수 JPA 리포지토리와 QueryDsl
+
+## 순수 JPA 리포지토리와 Querydsl
+
+```java
+@Repository
+public class MemberJpaRepository {
+
+    public List<Member> findAll() {
+        return em.createQuery("select m from Member m", Member.class)
+                .getResultList();
+    }
+
+    public List<Member> findByUsername(String username) {
+        return em.createQuery("select m from Member m where m.username   = :username", Member.class)
+                .setParameter("username", username)
+                .getResultList();
+    }
+}
+
+@SpringBootTest
+@Transactional
+class MemberJpaRepositoryTest {
+
+    @Test
+    public void basicTest() {
+        Member member = new Member("member1", 10);
+        memberJpaRepository.save(member);
+
+        Member findMember = memberJpaRepository.findById(member.getId()).get();
+        assertThat(findMember).isEqualTo(member);
+
+        List<Member> result1 = memberJpaRepository.findAll();
+        assertThat(result1).containsExactly(member);
+
+        List<Member> result2 = memberJpaRepository.findByUsername("member1");
+        assertThat(result2).containsExactly(member);
+    }
+}
+```
+```java
+@Repository
+public class MemberJpaRepository {
+
+    public List<Member> findAll_Querydsl() {
+        return queryFactory
+                .selectFrom(member).fetch();
+    }
+
+    public List<Member> findByUsername_Querydsl(String username) {
+        return queryFactory
+                .selectFrom(member)
+                .where(member.username.eq(username))
+                .fetch();
+    }
+}
+
+@SpringBootTest
+@Transactional
+class MemberJpaRepositoryTest {
+
+    @Test
+    public void basicQuerydslTest() {
+        Member member = new Member("member1", 10);
+        memberJpaRepository.save(member);
+
+        Member findMember = memberJpaRepository.findById(member.getId()).get();
+        assertThat(findMember).isEqualTo(member);
+
+        List<Member> result1 = memberJpaRepository.findAll_Querydsl();
+        assertThat(result1).containsExactly(member);
+
+        List<Member> result2 =
+                memberJpaRepository.findByUsername_Querydsl("member1");
+        assertThat(result2).containsExactly(member);
+    }
+}
+```
+- QueryDsl을 사용하면 자바 코드로 짜기 때문에 오류를 빨리 발견 할 수 있다.
+- 쿼리 파라미터 바인딩을 신경쓰지 않아도된다.
+
+### 쿼리 팩토리 주입
+```java
+@Repository
+public class MemberJpaRepository {
+
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    public MemberJpaRepository(EntityManager em) {
+        this.em = em;
+        this.queryFactory = new JPAQueryFactory(em);
+    }
+}
+```
+```java
+@SpringBootApplication
+public class KimyounghanQuerydslApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(KimyounghanQuerydslApplication.class, args);
+    }
+
+    @Bean
+    JPAQueryFactory jpaQueryFactory(EntityManager em) {
+        return new JPAQueryFactory(em);
+    }
+}
+
+@Repository
+public class MemberJpaRepository {
+
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    // 이미 빈으로 등록됐기 때문에 바로 주입하면 된다.
+    // 롬복 @RequiredConstructor로 대체할 수 있게 된다.
+    public MemberJpaRepository(EntityManager em, JPAQueryFacotry queryFactory) {
+        this.em = em;
+        this.queryFactory = queryFactory;
+    }
+}
+```
+- queryFactory를 주입할 때는 생성자와 @Bean 방식 두 가지가 있다.
+
+### 동시성
+- 스프링이 주입해주는 엔티티 매니저는 프록시용 가짜 엔티티 매니저이다.
+  - 실제 동작 시점에 트랜잭션 단위로 실제 엔티티 매니저(영속성 컨텍스트)를 할당한다.
+- 멀티 스레드 문제를 신경쓸 필요가 없다.
+
+## 동적 쿼리와 성능 최적화 조회
+
+### 조회 최적화용 DTO 추가
+```java
+@Data
+public class MemberTeamDto {
+
+    private Long memberId;
+    private String username;
+    private int age;
+    private Long teamId;
+    private String teamName;
+
+    @QueryProjection
+    public MemberTeamDto(Long memberId, String username, int age, Long teamId,
+                         String teamName) {
+        this.memberId = memberId;
+        this.username = username;
+        this.age = age;
+        this.teamId = teamId;
+        this.teamName = teamName;
+    }
+}
+```
+- @QueryProjection을 추가한다.
+- DTO가 QueryDsl 라이브러리에 의존하게된다는 단점이 존재한다.
+  - 이것이 싫다면 애니테이션을 삭제하고 아래중 하나를 사용한다.
+    - Projection.bean()
+    - fields()
+    - constructor()
+
+### 회원 검색 조건
+```java
+@Data
+public class MemberSearchCondition {
+
+    // 회원명, 팀명, 나이(ageGoe, ageLoe)
+    private String username;
+    private String teamName;
+    private Integer ageGoe;
+    private Integer ageLoe;
+
+}
+```
+
+### 동적 쿼리 구현
+```java
+@Repository
+public class MemberJpaRepository {
+
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    public List<MemberTeamDto> searchByBuilder(MemberSearchCondition condition) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (hasText(condition.getUsername())) {
+            builder.and(member.username.eq(condition.getUsername()));
+        }
+
+        if (hasText(condition.getTeamName())) {
+            builder.and(team.name.eq(condition.getTeamName()));
+        }
+
+        if (condition.getAgeGoe() != null) {
+            builder.and(member.age.goe(condition.getAgeGoe()));
+        }
+
+        if (condition.getAgeLoe() != null) {
+            builder.and(member.age.loe(condition.getAgeLoe()));
+        }
+
+        return queryFactory
+                .select(new QMemberTeamDto(
+                        member.id,
+                        member.username,
+                        member.age,
+                        team.id,
+                        team.name))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(builder)
+                .fetch();
+    }
+}
+```
+
+### 테스트
+```java
+@SpringBootTest
+@Transactional
+class MemberJpaRepositoryTest {
+
+    @Autowired
+    EntityManager em;
+
+    @Autowired
+    MemberJpaRepository memberJpaRepository;
+
+    @Test
+    public void searchTest() {
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+
+        em.persist(teamA);
+        em.persist(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 20, teamA);
+        Member member3 = new Member("member3", 30, teamB);
+        Member member4 = new Member("member4", 40, teamB);
+
+        em.persist(member1);
+        em.persist(member2);
+        em.persist(member3);
+        em.persist(member4);
+
+        MemberSearchCondition condition = new MemberSearchCondition();
+        condition.setAgeGoe(35);
+        condition.setAgeLoe(40);
+        condition.setTeamName("teamB");
+
+        List<MemberTeamDto> result =
+                memberJpaRepository.searchByBuilder(condition);
+
+        assertThat(result).extracting("username").containsExactly("member4");
+    }
+}
+```
+```sql
+select member1.id,
+       member1.username,
+       member1.age,
+       team.id,
+       team.name
+from Member member1
+         left join member1.team as team
+where team.name = ?1
+  and member1.age >= ?2
+  and member1.age <= ?3
+```
+```sql
+select member1.id,
+       member1.username,
+       member1.age,
+       team.id,
+       team.name
+from Member member1
+         left join
+     member1.team as team
+```
+- condition에 조건이 아무것도 들어가지 않으면 모든 데이터를 끌고온다.
+- 운영 서버에서는 데이터가 많기 때문에 기본 조건이나 limit가 필요하다.
+
+### Where절에 파라미터 사용
+```java
+public class MemberJpaRepository {
+
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    public List<MemberTeamDto> search(MemberSearchCondition condition) {
+        return queryFactory
+                .select(new QMemberTeamDto(
+                        member.id,
+                        member.username,
+                        member.age,
+                        team.id,
+                        team.name))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe()))
+                .fetch();
+    }
+
+    private BooleanExpression usernameEq(String username) {
+        return hasText(username) ? null : member.username.eq(username);
+    }
+
+    private BooleanExpression teamNameEq(String teamName) {
+        return hasText(teamName) ? null : team.name.eq(teamName);
+    }
+
+    private BooleanExpression ageGoe(Integer ageGoe) {
+        return ageGoe == null ? null : member.age.goe(ageGoe);
+    }
+
+    private BooleanExpression ageLoe(Integer ageLoe) {
+        return ageLoe == null ? null : member.age.loe(ageLoe);
+    }
+}
+```
+
+### 메서드 재사용
+```java
+@Repository
+public class MemberJpaRepository {
+
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    // 메서드 재사용 가능
+    public List<Member> findMember(MemberSearchCondition condition) {
+        return queryFactory
+                .selectFrom(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe()))
+                .fetch();
+    }
+    
+    ...
+}
+```
+
+## 조회 API 컨트롤러 개발
+```java
+@RestController
+@RequiredArgsConstructor
+public class MemberController {
+
+    private final MemberJpaRepository memberJpaRepository;
+
+    @GetMapping("/v1/members")
+    public List<MemberTeamDto> searchMemberV1(MemberSearchCondition condition) {
+        return memberJpaRepository.search(condition);
+    }
+}
+```
