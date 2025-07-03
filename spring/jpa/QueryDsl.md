@@ -2288,4 +2288,4 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 }
 ```
-- 스프링 데이터 JPA의 정렬ㄹ을 QueryDsl 정렬로 직접 변환 가능하다.
+- 스프링 데이터 JPA의 정렬을 QueryDsl 정렬로 직접 변환 가능하다.
