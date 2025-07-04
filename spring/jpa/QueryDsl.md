@@ -1,6 +1,97 @@
 # QueryDsl
 
 # 목차
+- [QueryDsl](#querydsl)
+- [목차](#목차)
+- [기본 문법](#기본-문법)
+  - [JPQL vs QueryDsl](#jpql-vs-querydsl)
+    - [JPAQueryFactory를 필드로 전환](#jpaqueryfactory를-필드로-전환)
+    - [동시성 문제](#동시성-문제)
+  - [Q-Type 활용](#q-type-활용)
+    - [별칭 직접 지정](#별칭-직접-지정)
+    - [JPQL 로그 확인](#jpql-로그-확인)
+  - [검색 조건](#검색-조건)
+    - [제공하는 검색 조건](#제공하는-검색-조건)
+    - [AND 조건을 파라미터로 처리](#and-조건을-파라미터로-처리)
+  - [결과 조회](#결과-조회)
+  - [정렬](#정렬)
+  - [페이징](#페이징)
+    - [조회 건수 제한](#조회-건수-제한)
+    - [전체 조회 count가 필요하다면](#전체-조회-count가-필요하다면)
+    - [실무에서 페이징 쿼리를 작성할 때 주의점](#실무에서-페이징-쿼리를-작성할-때-주의점)
+  - [집합 함수](#집합-함수)
+    - [GroupBy](#groupby)
+    - [Having](#having)
+  - [조인](#조인)
+    - [기본 조인](#기본-조인)
+    - [세타 조인](#세타-조인)
+  - [on절](#on절)
+    - [조인 대상 필터링](#조인-대상-필터링)
+    - [연관 관계 없는 엔티티 외부 조인](#연관-관계-없는-엔티티-외부-조인)
+  - [fetch join](#fetch-join)
+    - [before](#before)
+    - [after](#after)
+  - [서브 쿼리](#서브-쿼리)
+    - [eq](#eq)
+    - [goe](#goe)
+    - [in](#in)
+    - [select절에 subquery](#select절에-subquery)
+    - [static import 활용](#static-import-활용)
+    - [from절의 서브쿼리 한계](#from절의-서브쿼리-한계)
+    - [해결 방안](#해결-방안)
+  - [Case 문](#case-문)
+    - [단순한 조건](#단순한-조건)
+    - [복잡한 조건](#복잡한-조건)
+    - [orderBy + case](#orderby--case)
+  - [상수, 문자 더하기](#상수-문자-더하기)
+    - [상수](#상수)
+    - [문자 더하기](#문자-더하기)
+- [중급 문법](#중급-문법)
+  - [프로젝션과 결과 반환](#프로젝션과-결과-반환)
+    - [프로젝션 대상이 하나일 때](#프로젝션-대상이-하나일-때)
+    - [프로젝션 대상이 둘일 때](#프로젝션-대상이-둘일-때)
+      - [Tuple](#tuple)
+      - [순수 JPA에서 DTO 조회](#순수-jpa에서-dto-조회)
+      - [QueryDsl 빈 생성](#querydsl-빈-생성)
+      - [별칭이 다를 때](#별칭이-다를-때)
+    - [@QueryProjection](#queryprojection)
+  - [동적 쿼리](#동적-쿼리)
+    - [BooleanBuilder](#booleanbuilder)
+    - [where 다중 파라미터](#where-다중-파라미터)
+      - [조합](#조합)
+  - [수정, 삭제 벌크 연산](#수정-삭제-벌크-연산)
+    - [대량 데이터 수정](#대량-데이터-수정)
+  - [대량 데이터 1씩 더하기](#대량-데이터-1씩-더하기)
+  - [대량 데이터 삭제](#대량-데이터-삭제)
+  - [SQL Function 호출](#sql-function-호출)
+    - [컬럼명 변경](#컬럼명-변경)
+    - [소문자 변경](#소문자-변경)
+- [순수 JPA 리포지토리와 QueryDsl](#순수-jpa-리포지토리와-querydsl)
+  - [순수 JPA 리포지토리와 Querydsl](#순수-jpa-리포지토리와-querydsl-1)
+    - [쿼리 팩토리 주입](#쿼리-팩토리-주입)
+    - [동시성](#동시성)
+  - [동적 쿼리와 성능 최적화 조회](#동적-쿼리와-성능-최적화-조회)
+    - [조회 최적화용 DTO 추가](#조회-최적화용-dto-추가)
+    - [회원 검색 조건](#회원-검색-조건)
+    - [동적 쿼리 구현](#동적-쿼리-구현)
+    - [테스트](#테스트)
+    - [Where절에 파라미터 사용](#where절에-파라미터-사용)
+    - [메서드 재사용](#메서드-재사용)
+  - [조회 API 컨트롤러 개발](#조회-api-컨트롤러-개발)
+- [스프링 데이터 JPA와 QueryDsl](#스프링-데이터-jpa와-querydsl)
+  - [스프링 데이터 페이징 활용](#스프링-데이터-페이징-활용)
+    - [단순한 페이징](#단순한-페이징)
+    - [복잡한 페이징](#복잡한-페이징)
+  - [CountQuery 최적화](#countquery-최적화)
+  - [참고](#참고)
+    - [Querydsl fetchResults(), fetchCount() Deprecated](#querydsl-fetchresults-fetchcount-deprecated)
+  - [CountQuery 최적화](#countquery-최적화-1)
+  - [컨트롤러 개발](#컨트롤러-개발)
+  - [정렬](#정렬-1)
+- [스프링 데이터 JPA가 제공하는 QueryDsl 기능](#스프링-데이터-jpa가-제공하는-querydsl-기능)
+  - [QuerydslPredicateExecutor 인터페이스](#querydslpredicateexecutor-인터페이스)
+  - [QueryWeb](#queryweb)
+  - [QuerydslRepositorySupport 리포지토리](#querydslrepositorysupport-리포지토리)
 
 # 기본 문법
 
@@ -2289,3 +2380,55 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 }
 ```
 - 스프링 데이터 JPA의 정렬을 QueryDsl 정렬로 직접 변환 가능하다.
+
+# 스프링 데이터 JPA가 제공하는 QueryDsl 기능
+- 실무에서는 사용하기에 제약이 크기 때문에 간단하게만 작성할 것이다.
+
+## QuerydslPredicateExecutor 인터페이스
+```java
+public interface QuerydslPredicateExecutor<T> {
+    Optional<T> findById(Predicate predicate);
+
+    Iterable<T> findAll(Predicate predicate);
+
+    long count(Predicate predicate);
+
+    boolean exists(Predicate predicate);
+}
+```
+```java
+ interface MemberRepository extends JpaRepository<User, Long>,
+        QuerydslPredicateExecutor<User> {
+}
+```
+```java
+class TestService {
+
+    public void test() {
+        Iterable result = memberRepository.findAll(
+                member.age.between(10, 40)
+                        .and(member.username.eq("member1"))
+        );
+    }
+}
+```
+- 묵시적 조인만 가능.
+- 클라이언트가 QueryDsl에 의존적이다.
+- 복잡한 실무환경에 적용하기에 한계가 명확하다.
+- Pageable, Sort를 지원한다.
+
+## QueryWeb
+- 파라미터로 들어오는 값을 Querydsl에 매핑한다.
+- 단순한 조건만 가능하다.
+- 조건을 커스텀하는 기능이 복잡하고 명시적이지 않다.
+- 컨트롤러가 Querydsl에 의존한다.
+- 복잡한 실무에서 사용하기 힘들다.
+
+## QuerydslRepositorySupport 리포지토리
+- 스프링 데이터 JPA가 제공하는 페이징을 Querydsl로 편리하게 변환 가능하다.
+  - Sort는 오류가 발생한다.
+- from()으로 시작할 수 있다.
+  - 최근엔 select()로 시작하는 것이 더 명시적이다.
+- EntityManager를 제공한다.
+- Querydsl 3.x만 대상이다.
+- QueryFactory를 제공하지 않는다.
