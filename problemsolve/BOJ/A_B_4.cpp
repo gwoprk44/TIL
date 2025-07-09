@@ -4,9 +4,12 @@ using namespace std;
 int main() {
     ios::sync_with_stdio(0);
     cin.tie(0);
+    
+    int a,b;
 
-    int a, b;
-    cin >> a >> b;
+    while (cin >> a >> b) {
+        cout << a + b << "\n";
+    }
 
-    cout << a * b;
+   
 }
