@@ -5,7 +5,7 @@ int main() {
     ios::sync_with_stdio(0);
     cin.tie(0);
 
-    vector<int> dp(11, 0);
+    vector<int> dp(11);
 
     dp[1] = 1;
     dp[2] = 2;
@@ -17,12 +17,10 @@ int main() {
 
     int t;
     cin >> t;
-    
+
     while (t--) {
         int n;
         cin >> n;
         cout << dp[n] << "\n";
     }
-
-    return 0;
 }
