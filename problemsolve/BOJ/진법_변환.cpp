@@ -5,15 +5,19 @@ int main() {
     ios::sync_with_stdio(0);
     cin.tie(0);
 
-    int ans = 0;
-    int b;
-    string n;
+    string s;
+    int b, sum = 0;
+    cin >> s >> b;
 
-    cin >> n >> b;
-
-    for (int i = 0; i < n.length(); i++) {
-        if(n[i] >= '0' && n[i] <= '9') ans = ans * b + n[i] - '0';
-        else ans = ans * b + n[i] - 'A' + 10;
+    for (int i = 0; i < s.size(); i++) {
+        if (s[i] > '0' && s[i] <= '9') {
+            sum = sum * b + s[i] - 48;
+        }
+        else {
+            sum = sum * b + (s[i] - 65 + 10);
+        }
     }
-    cout << ans;
+    cout << sum;
+
+
 }
