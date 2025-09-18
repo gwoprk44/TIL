@@ -7,15 +7,21 @@ int main() {
 
     int n, b;
     string ans;
+
     cin >> n >> b;
 
-    while(n > 0) {
+    while (n > 0) {
         int temp = n % b;
-        if(temp >= 0 && temp <= 9) ans += temp + '0';
-        else ans += temp-10 + 'A';
+
+        if (temp <= 9 && temp >= 0) {
+            ans += temp + '0';
+        } else {
+            ans += temp - 10 + 'A';
+        }
         n /= b;
     }
-    for (int i = ans.length()-1; i >= 0; i--) {
+
+    for (int i = ans.length() - 1; i >= 0; i--) {
         cout << ans[i];
     }
 }
