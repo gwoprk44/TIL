@@ -47,5 +47,4 @@ int main() {
     }
     
     cout << min_time << " " << result_h;
-
 }
