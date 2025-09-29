@@ -6,10 +6,7 @@ int main() {
     cin.tie(0);
 
     int x, y, w, h;
-
     cin >> x >> y >> w >> h;
 
-    int ans = min({x, w-x, y, h-y});
-
-    cout << ans;
+    cout << min({x, w - x, y, h - y});
 }
