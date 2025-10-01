@@ -6,7 +6,8 @@ int main() {
     cin.tie(0);
 
     long long n;
+    
     cin >> n;
 
-    cout << 4*n;
+    cout << 4 * n;
 }
