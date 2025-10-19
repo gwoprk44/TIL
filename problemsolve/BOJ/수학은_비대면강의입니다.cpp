@@ -13,3 +13,4 @@ int main() {
 
     cout << x << " " << y;
 }
+
